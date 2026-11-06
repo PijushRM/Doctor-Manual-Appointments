@@ -1,0 +1,111 @@
+import {StyleSheet} from 'react-native';
+import {FontFamily} from 'src/configs/fonts';
+import type {Theme} from 'src/configs/theme';
+
+export const EVENT_ICON_SIZE = 36;
+
+export const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    body: {flex: 1, paddingTop: 12, paddingHorizontal: 16, gap: 12},
+    identity: {flexDirection: 'row', alignItems: 'center', gap: 14},
+    avatar: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: theme.colors.chip,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarText: {fontFamily: FontFamily.semibold, fontSize: 20, lineHeight: 24},
+    name: {fontFamily: FontFamily.display, fontSize: 28, lineHeight: 34},
+    facts: {marginTop: 2},
+    info: {
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minHeight: 42,
+    },
+    divider: {borderBottomWidth: 1, borderBottomColor: theme.colors.border},
+    infoText: {flexShrink: 1},
+    actions: {flexDirection: 'row', gap: 8},
+    action: {
+      height: 52,
+      borderRadius: 999,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+    },
+    primary: {
+      flex: 1.5,
+      backgroundColor: theme.colors.fillStrong,
+      boxShadow: theme.shadow.button,
+    },
+    outline: {flex: 1, borderWidth: 1, borderColor: theme.colors.border},
+    actionText: {fontSize: 15},
+    pressed: {transform: [{scale: 0.95}]},
+    activityHeader: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+    },
+    timeline: {flex: 1},
+    event: {flexDirection: 'row', gap: 12, paddingBottom: 12},
+    // The connector between one event's icon and the next.
+    line: {
+      position: 'absolute',
+      left: EVENT_ICON_SIZE / 2 - 1,
+      top: EVENT_ICON_SIZE,
+      bottom: 0,
+      width: 2,
+      backgroundColor: theme.colors.border,
+    },
+    eventIcon: {
+      width: EVENT_ICON_SIZE,
+      height: EVENT_ICON_SIZE,
+      borderRadius: EVENT_ICON_SIZE / 2,
+      backgroundColor: theme.colors.chip,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    eventText: {flex: 1, minWidth: 0},
+    eventTop: {flexDirection: 'row', justifyContent: 'space-between', gap: 8},
+    eventTitle: {fontSize: 15},
+    eventDetail: {marginTop: 2, fontFamily: FontFamily.medium},
+    eventPressed: {opacity: 0.6},
+    eventIconNew: {backgroundColor: theme.colors.textLink},
+    eventTitleRow: {flexDirection: 'row', alignItems: 'center', flexShrink: 1},
+    newTag: {
+      marginLeft: 6,
+      paddingVertical: 1,
+      paddingHorizontal: 6,
+      borderRadius: 4,
+      backgroundColor: theme.colors.success,
+    },
+    newTagText: {fontSize: 11, lineHeight: 15},
+    note: {
+      marginTop: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: 8,
+      backgroundColor: theme.colors.surfaceSunken,
+    },
+    noteText: {fontSize: 13, lineHeight: 18},
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderRadius: 12,
+      backgroundColor: theme.colors.success,
+    },
+    bannerText: {flexShrink: 1, fontSize: 13},
+  });
