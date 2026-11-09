@@ -44,17 +44,15 @@ describe('saveProfile', () => {
             },
           },
     );
-    await useDoctorStore
-      .getState()
-      .saveProfile(
-        {name: 'Dr. Y', clinicName: 'Smile'},
-        {
-          uri: 'file:///me.jpg',
-          name: 'me.jpg',
-          size: 10,
-          mimeType: 'image/jpeg',
-        },
-      );
+    await useDoctorStore.getState().saveProfile(
+      {name: 'Dr. Y', clinicName: 'Smile'},
+      {
+        uri: 'file:///me.jpg',
+        name: 'me.jpg',
+        size: 10,
+        mimeType: 'image/jpeg',
+      },
+    );
     expect(calls.map(c => [c.method, c.path])).toEqual([
       ['PUT', '/api/doctor/photo'],
       ['PATCH', '/api/doctor/profile'],

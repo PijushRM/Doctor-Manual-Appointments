@@ -157,7 +157,9 @@ describe('logOut and expired sessions', () => {
       status: 401,
       json: {error: 'Invalid or expired token'},
     }));
-    await expect(api.sync()).rejects.toThrow('Invalid or expired token');
+    await expect(api.sync()).rejects.toThrow(
+      'Your session has expired. Please log in again.',
+    );
     expect(useAuthStore.getState().isLoggedIn).toBe(false);
   });
 });

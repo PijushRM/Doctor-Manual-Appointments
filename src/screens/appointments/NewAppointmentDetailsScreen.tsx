@@ -47,6 +47,7 @@ export const NewAppointmentDetailsScreen = () => {
         </AppText>
         <TextField
           label="Full name"
+          placeholder="e.g. Amit Das"
           // Keyboards "correct" names (Subhas → Subhash).
           autoCorrect={false}
           value={vm.draft.name}
@@ -63,6 +64,7 @@ export const NewAppointmentDetailsScreen = () => {
             <TextField
               ref={ageRef}
               label="Age"
+              placeholder="e.g. 34"
               value={vm.draft.age}
               onChangeText={vm.setField('age')}
               error={vm.errors.age}
@@ -77,6 +79,7 @@ export const NewAppointmentDetailsScreen = () => {
             <TextField
               ref={phoneRef}
               label="Phone number"
+              placeholder="e.g. 98300 12345"
               value={vm.draft.phone}
               onChangeText={vm.setField('phone')}
               error={vm.errors.phone}
@@ -91,6 +94,7 @@ export const NewAppointmentDetailsScreen = () => {
         <TextField
           ref={emailRef}
           label="Email (optional)"
+          placeholder="e.g. amit@gmail.com"
           value={vm.draft.email}
           onChangeText={vm.setField('email')}
           error={vm.errors.email}

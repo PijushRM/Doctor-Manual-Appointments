@@ -1,5 +1,4 @@
 import {useState} from 'react';
-import {Alert} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -20,13 +19,13 @@ import {
 import type {PatientsStackParamList} from 'src/navigation/types';
 import {
   chooseFile,
+  FileTooLargeError,
   toUpload,
   takePhoto,
   type PickedFile,
 } from 'src/services/fileService';
 import {useClinicStore} from 'src/store/useClinicStore';
-import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
-import {ApiError} from 'src/services/api';
+import {showError} from 'src/utils/showError';
 
 type Route = RouteProp<PatientsStackParamList, 'UploadNote'>;
 
@@ -58,8 +57,13 @@ export const useUploadNoteViewModel = () => {
         setFile(picked);
         setError(null);
       }
-    } catch {
-      Alert.alert('Couldn’t add the file', 'Please try again.');
+    } catch (e) {
+      showError(
+        e instanceof FileTooLargeError
+          ? 'File too large'
+          : 'Couldn’t add the file',
+        e,
+      );
     }
   };
 
@@ -87,13 +91,9 @@ export const useUploadNoteViewModel = () => {
       });
       navigation.navigate('PatientProfile', {patientId, addedEntryId: id});
     } catch (e) {
-      Alert.alert(
+      showError(
         isNote ? 'Couldn’t save the note' : 'Couldn’t save the file',
-        e instanceof ApiError
-          ? e.offline
-            ? OFFLINE_MESSAGE
-            : e.message
-          : 'Please try again.',
+        e,
       );
     } finally {
       setSaving(false);

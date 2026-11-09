@@ -7,10 +7,14 @@ import {
   DefaultTheme,
   NavigationContainer,
 } from '@react-navigation/native';
+import {ErrorBoundary} from 'src/components/shared/ErrorBoundary';
 import {useReminderSync} from 'src/hooks/useReminderSync';
 import {useServerSync} from 'src/hooks/useServerSync';
 import {useTheme} from 'src/hooks/useTheme';
 import {RootNavigator} from 'src/navigation/RootNavigator';
+import {installCrashHandler} from 'src/services/crashHandler';
+
+installCrashHandler();
 
 const App = () => {
   const theme = useTheme();
@@ -35,9 +39,11 @@ const App = () => {
           barStyle={theme.dark ? 'light-content' : 'dark-content'}
           backgroundColor={theme.colors.bg}
         />
-        <NavigationContainer theme={navTheme}>
-          <RootNavigator />
-        </NavigationContainer>
+        <ErrorBoundary>
+          <NavigationContainer theme={navTheme}>
+            <RootNavigator />
+          </NavigationContainer>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -15,6 +15,7 @@ import {openWhatsApp, shareMessage} from 'src/services/shareService';
 import {openSmsApp, sendSms} from 'src/services/smsService';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {showError} from 'src/utils/showError';
 
 export type Channel = 'sms' | 'whatsapp' | 'facebook';
 type Status = 'idle' | 'sending' | 'sent';
@@ -24,6 +25,12 @@ const CHANNELS: {key: Channel; label: string}[] = [
   {key: 'whatsapp', label: 'WhatsApp'},
   {key: 'facebook', label: 'Facebook'},
 ];
+
+const SEND_FAILED: Record<Channel, string> = {
+  sms: 'The message wasn’t sent. Please try again.',
+  whatsapp: 'Couldn’t open WhatsApp or the browser on this phone.',
+  facebook: 'Couldn’t open the share menu. Please try again.',
+};
 
 const SMS_ALERTS = {
   failed: {
@@ -87,7 +94,13 @@ export const useAppointmentSavedViewModel = () => {
               ? {
                   text: 'Open Settings',
                   onPress: () => {
-                    Linking.openSettings().catch(() => {});
+                    Linking.openSettings().catch(e =>
+                      showError(
+                        'Couldn’t open Settings',
+                        e,
+                        'Open Settings › Apps › Smile Doctor on your phone.',
+                      ),
+                    );
                   },
                 }
               : {text: 'Cancel', style: 'cancel'},
@@ -96,7 +109,13 @@ export const useAppointmentSavedViewModel = () => {
               onPress: () => {
                 openSmsApp(patient.phone, message)
                   .then(() => mark(channel, 'sent'))
-                  .catch(() => {});
+                  .catch(e =>
+                    showError(
+                      'Couldn’t open Messages',
+                      e,
+                      'No messaging app was found on this phone.',
+                    ),
+                  );
               },
             },
           ],
@@ -132,7 +151,10 @@ export const useAppointmentSavedViewModel = () => {
       ...c,
       status: status[c.key],
       send: () => {
-        send(c.key).catch(() => mark(c.key, 'idle'));
+        send(c.key).catch(e => {
+          mark(c.key, 'idle');
+          showError(`Couldn’t send by ${c.label}`, e, SEND_FAILED[c.key]);
+        });
       },
     })),
     viewPatients: () =>

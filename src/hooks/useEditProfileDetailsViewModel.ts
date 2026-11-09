@@ -11,11 +11,13 @@ import {doctorInitials} from 'src/features/patients/patients';
 import type {ProfileStackParamList} from 'src/navigation/types';
 import {
   choosePhoto,
+  FileTooLargeError,
   takePhoto,
   type PickedFile,
 } from 'src/services/fileService';
 import {profilePhotoSource} from 'src/features/doctor/photo';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {showError} from 'src/utils/showError';
 
 export const useEditProfileDetailsViewModel = () => {
   const navigation =
@@ -28,14 +30,21 @@ export const useEditProfileDetailsViewModel = () => {
     qualifications: profile.qualifications,
     speciality: profile.speciality,
   }));
-  // A newly picked photo; it's copied into the app only on Save.
+  // A newly picked photo; it's uploaded only on Save.
   const [photo, setPhoto] = useState<PickedFile | null>(null);
   const [errors, setErrors] = useState<ProfileErrors>({});
 
   const pickPhoto = (source: 'camera' | 'library') => {
     (source === 'camera' ? takePhoto() : choosePhoto())
       .then(picked => picked && setPhoto(picked))
-      .catch(() => Alert.alert('Couldn’t get the photo', 'Please try again.'));
+      .catch(e =>
+        showError(
+          e instanceof FileTooLargeError
+            ? 'Photo too large'
+            : 'Couldn’t get the photo',
+          e,
+        ),
+      );
   };
 
   return {

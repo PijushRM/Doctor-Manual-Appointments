@@ -11,13 +11,20 @@ import {
   useDoctorStore,
 } from 'src/store/useDoctorStore';
 import {useClinicStore} from 'src/store/useClinicStore';
+import {errorMessage} from 'src/utils/errors';
 
 // Nothing is saved on the phone: every screen shows what the server last sent,
 // held in memory only. `status` covers the first load after launch or login,
 // so screens never show "no patients" before the server has answered.
-type SyncState = {status: 'idle' | 'loading' | 'ready' | 'error'};
+type SyncState = {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  error: string; // why the first load failed, for the Retry screen
+};
 
-export const useSyncStore = create<SyncState>()(() => ({status: 'idle'}));
+export const useSyncStore = create<SyncState>()(() => ({
+  status: 'idle',
+  error: '',
+}));
 
 export const applyDoctor = (doctor: ServerDoctor) =>
   useDoctorStore.setState({profile: fromServer(doctor)});
@@ -40,14 +47,14 @@ export const syncAll = () => {
   inFlight ??= (async () => {
     const first = useSyncStore.getState().status !== 'ready';
     if (first) {
-      useSyncStore.setState({status: 'loading'});
+      useSyncStore.setState({status: 'loading', error: ''});
     }
     try {
       applySync(await api.sync());
       useSyncStore.setState({status: 'ready'});
     } catch (e) {
       if (first) {
-        useSyncStore.setState({status: 'error'});
+        useSyncStore.setState({status: 'error', error: errorMessage(e)});
       }
       throw e;
     } finally {
@@ -61,5 +68,5 @@ export const syncAll = () => {
 export const clearData = () => {
   useClinicStore.setState({patients: [], appointments: [], entries: []});
   useDoctorStore.setState({profile: EMPTY_PROFILE});
-  useSyncStore.setState({status: 'idle'});
+  useSyncStore.setState({status: 'idle', error: ''});
 };

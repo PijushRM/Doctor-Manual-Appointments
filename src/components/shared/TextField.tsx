@@ -7,6 +7,8 @@ import {Icon, type IconName} from './Icon';
 
 type Props = TextInputProps & {
   label: string;
+  // Required so no field is left blank: an example ("e.g. …") or an instruction.
+  placeholder: string;
   hint?: string; // right of the label, e.g. "OPTIONAL"
   icon?: IconName;
   trailing?: React.ReactNode;

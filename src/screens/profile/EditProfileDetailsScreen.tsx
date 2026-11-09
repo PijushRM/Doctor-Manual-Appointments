@@ -70,6 +70,7 @@ export const EditProfileDetailsScreen = () => {
         </AppText>
         <TextField
           label="Full name"
+          placeholder="e.g. Dr. Anita Sen"
           // Keyboards "correct" names (Subhas → Subhash).
           autoCorrect={false}
           value={vm.draft.name}

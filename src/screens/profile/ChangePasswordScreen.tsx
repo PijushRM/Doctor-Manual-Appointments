@@ -87,6 +87,7 @@ export const ChangePasswordScreen = () => {
         </AppText>
         <TextField
           label="Current password"
+          placeholder="Enter your current password"
           {...field('current')}
           autoComplete="current-password"
           returnKeyType="next"
@@ -96,6 +97,7 @@ export const ChangePasswordScreen = () => {
         <TextField
           ref={nextRef}
           label="New password"
+          placeholder="At least 6 characters"
           hint="AT LEAST 6 CHARACTERS"
           {...field('next')}
           autoComplete="new-password"
@@ -106,6 +108,7 @@ export const ChangePasswordScreen = () => {
         <TextField
           ref={confirmRef}
           label="Confirm new password"
+          placeholder="Type the new password again"
           {...field('confirm')}
           autoComplete="new-password"
           returnKeyType="done"

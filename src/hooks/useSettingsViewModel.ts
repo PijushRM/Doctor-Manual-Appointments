@@ -5,6 +5,7 @@ import type {ProfileStackParamList} from 'src/navigation/types';
 import {requestAlertPermission} from 'src/services/notificationService';
 import {useAuthStore} from 'src/store/useAuthStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {showError} from 'src/utils/showError';
 
 export const useSettingsViewModel = () => {
   const navigation =
@@ -30,7 +31,13 @@ export const useSettingsViewModel = () => {
         {
           text: 'Open Settings',
           onPress: () => {
-            Linking.openSettings().catch(() => {});
+            Linking.openSettings().catch(e =>
+              showError(
+                'Couldn’t open Settings',
+                e,
+                'Open Settings › Apps › Smile Doctor on your phone.',
+              ),
+            );
           },
         },
       ],
@@ -41,7 +48,9 @@ export const useSettingsViewModel = () => {
   return {
     alerts,
     toggleAlerts: () => {
-      toggleAlerts().catch(() => {});
+      toggleAlerts().catch(e =>
+        showError('Couldn’t change appointment alerts', e),
+      );
     },
     // Clinic hours and working days live on Edit Profile, part 2.
     openAvailability: () => navigation.navigate('EditProfileClinic'),

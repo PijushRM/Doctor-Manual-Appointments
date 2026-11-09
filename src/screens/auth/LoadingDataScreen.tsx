@@ -3,7 +3,6 @@ import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {AppText} from 'src/components/shared/AppText';
 import {Button} from 'src/components/shared/Button';
 import {Screen} from 'src/components/shared/Screen';
-import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
 import {useTheme} from 'src/hooks/useTheme';
 import {useAuthStore} from 'src/store/useAuthStore';
 import {syncAll, useSyncStore} from 'src/store/sync';
@@ -13,6 +12,7 @@ import {syncAll, useSyncStore} from 'src/store/sync';
 export const LoadingDataScreen = () => {
   const {colors} = useTheme();
   const failed = useSyncStore(s => s.status === 'error');
+  const reason = useSyncStore(s => s.error);
   const logOut = useAuthStore(s => s.logOut);
 
   return (
@@ -24,7 +24,7 @@ export const LoadingDataScreen = () => {
               Couldn’t load your clinic
             </AppText>
             <AppText color="textSubtle" style={styles.text}>
-              {OFFLINE_MESSAGE}
+              {reason}
             </AppText>
           </>
         ) : (

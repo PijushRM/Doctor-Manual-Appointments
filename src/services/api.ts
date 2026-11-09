@@ -1,4 +1,12 @@
 import {API_TIMEOUT_MS, API_URL, UPLOAD_TIMEOUT_MS} from 'src/configs/api';
+import {
+  AppError,
+  OFFLINE_MESSAGE,
+  SERVER_MESSAGE,
+  TIMEOUT_MESSAGE,
+  UNAVAILABLE_MESSAGE,
+  UNEXPECTED_MESSAGE,
+} from 'src/utils/errors';
 import type {
   Appointment,
   DocType,
@@ -11,7 +19,9 @@ import type {
 // Field-level messages from the server, e.g. {"patient.phone": "Enter a valid…"}.
 export type FieldErrors = Record<string, string>;
 
-export class ApiError extends Error {
+// `message` is always written for the doctor (see messageFor), so screens can
+// show it as is.
+export class ApiError extends AppError {
   constructor(
     // 0 = no response (offline, timeout, server down).
     public status: number,
@@ -72,12 +82,21 @@ export async function request<T>(path: string, options: Options = {}) {
   try {
     response = await fetch(`${API_URL}${path}`, init);
   } catch {
-    throw new ApiError(0, 'Can’t reach the server. Check your internet.');
+    // Aborted = our own timeout; anything else = no connection.
+    throw new ApiError(
+      0,
+      controller.signal.aborted ? TIMEOUT_MESSAGE : OFFLINE_MESSAGE,
+    );
   } finally {
     clearTimeout(timer);
   }
 
-  const body = (await response.json().catch(() => null)) as {
+  // Only JSON is read: a proxy, tunnel or crashed server can answer with an
+  // HTML page, which must not reach the screens.
+  const isJson = response.headers
+    .get('content-type')
+    ?.includes('application/json');
+  const body = (isJson ? await response.json().catch(() => null) : null) as {
     error?: string;
     details?: FieldErrors;
   } | null;
@@ -87,12 +106,52 @@ export async function request<T>(path: string, options: Options = {}) {
     }
     throw new ApiError(
       response.status,
-      body?.error ?? `Request failed (${response.status})`,
+      messageFor(response.status, body, auth),
       body?.details,
     );
   }
+  if (body === null) {
+    throw new ApiError(response.status, UNEXPECTED_MESSAGE);
+  }
   return body as unknown as T;
 }
+
+// The doctor-facing message for a failed request. The server's own message
+// is used for problems with what was sent (4xx); server faults (5xx) get a
+// plain message instead of the server's technical text.
+export const messageFor = (
+  status: number,
+  body: {error?: string; details?: FieldErrors} | null,
+  auth = true,
+): string => {
+  const fromServer =
+    Object.values(body?.details ?? {})[0] || body?.error || undefined;
+  if (status === 401 && auth) {
+    return 'Your session has expired. Please log in again.';
+  }
+  if (status === 403) {
+    return 'You don’t have permission to do this.';
+  }
+  if (status === 404) {
+    return fromServer ?? 'This was not found. It may have been deleted.';
+  }
+  if (status === 408 || status === 504) {
+    return TIMEOUT_MESSAGE;
+  }
+  if (status === 413) {
+    return 'This file is too large for the server.';
+  }
+  if (status === 429) {
+    return 'Too many attempts. Please wait a minute and try again.';
+  }
+  if (status === 502 || status === 503) {
+    return UNAVAILABLE_MESSAGE;
+  }
+  if (status >= 500) {
+    return SERVER_MESSAGE;
+  }
+  return fromServer ?? 'Please check the details and try again.';
+};
 
 // ---- Server shapes (see the backend's src/models) ----
 

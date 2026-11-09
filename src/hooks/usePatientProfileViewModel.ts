@@ -1,5 +1,4 @@
 import {useCallback, useState} from 'react';
-import {Alert} from 'react-native';
 import {
   useFocusEffect,
   useNavigation,
@@ -17,12 +16,11 @@ import {
 import {initials, splitSurname} from 'src/features/patients/patients';
 import {addedMessage} from 'src/features/patients/recordEntry';
 import type {PatientsStackParamList} from 'src/navigation/types';
-import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
-import {ApiError} from 'src/services/api';
 import {openFile} from 'src/services/fileService';
 import {useClinicStore} from 'src/store/useClinicStore';
 import type {StoredFile} from 'src/types/clinic';
 import {useNow} from './useNow';
+import {showError} from 'src/utils/showError';
 
 type Route = RouteProp<PatientsStackParamList, 'PatientProfile'>;
 
@@ -73,16 +71,7 @@ export const usePatientProfileViewModel = () => {
       isNew: e.key === freshId,
     })),
     open: (file: StoredFile) =>
-      openFile(file).catch(e =>
-        Alert.alert(
-          'Can’t open this file',
-          e instanceof ApiError
-            ? e.offline
-              ? OFFLINE_MESSAGE
-              : e.message
-            : 'No app on this phone can open it. Install a PDF or photo viewer and try again.',
-        ),
-      ),
+      openFile(file).catch(e => showError('Can’t open this file', e)),
     back: navigation.goBack,
     upload: () =>
       navigation.navigate('UploadNote', {patientId, mode: 'upload'}),

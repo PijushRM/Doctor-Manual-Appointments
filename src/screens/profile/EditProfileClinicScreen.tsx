@@ -41,6 +41,7 @@ export const EditProfileClinicScreen = () => {
         </AppText>
         <TextField
           label="Email"
+          placeholder="e.g. clinic@gmail.com"
           value={vm.draft.email}
           onChangeText={vm.setText('email')}
           error={vm.errors.email}
@@ -50,6 +51,7 @@ export const EditProfileClinicScreen = () => {
         />
         <TextField
           label="Phone"
+          placeholder="e.g. 98300 12345"
           hint="IN PATIENT SMS"
           value={vm.draft.phone}
           onChangeText={vm.setText('phone')}
@@ -59,6 +61,7 @@ export const EditProfileClinicScreen = () => {
         />
         <TextField
           label="Clinic name"
+          placeholder="e.g. Smile Dental Clinic"
           // Keyboards "correct" names (Subhas → Subhash).
           autoCorrect={false}
           value={vm.draft.clinicName}

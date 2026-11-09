@@ -1,5 +1,4 @@
 import {useState} from 'react';
-import {Alert} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -23,10 +22,9 @@ import type {
   AppointmentsStackParamList,
   RootStackParamList,
 } from 'src/navigation/types';
-import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
-import {ApiError} from 'src/services/api';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {showError} from 'src/utils/showError';
 
 type Navigation = CompositeNavigationProp<
   StackNavigationProp<AppointmentsStackParamList, 'NewAppointmentDateTime'>,
@@ -125,10 +123,7 @@ export const useNewAppointmentDateTimeViewModel = () => {
         })
         .catch(e => {
           setSaving(false);
-          Alert.alert(
-            'Couldn’t save the appointment',
-            e instanceof ApiError && !e.offline ? e.message : OFFLINE_MESSAGE,
-          );
+          showError('Couldn’t save the appointment', e);
         });
     },
   };

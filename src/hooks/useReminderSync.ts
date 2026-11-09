@@ -15,6 +15,9 @@ export const useReminderSync = () => {
     const reminders = alerts
       ? upcomingReminders(appointments, patients, new Date())
       : [];
-    syncReminders(reminders).catch(() => {});
+    // Runs in the background, so there's no one to show an alert to; logged.
+    syncReminders(reminders).catch(e =>
+      console.warn('[Appointment reminders]', e),
+    );
   }, [alerts, appointments, patients]);
 };

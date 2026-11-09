@@ -3,6 +3,7 @@ import {useNavigation} from '@react-navigation/native';
 import {APP_VERSION, BUILD_NUMBER, DEVELOPER} from 'src/constants/app';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {useNow} from './useNow';
+import {showError} from 'src/utils/showError';
 
 const isPlaceholder = (value: string) => value.startsWith('[');
 
@@ -33,7 +34,13 @@ export const useAboutViewModel = () => {
     isPlaceholder(value)
       ? undefined
       : () => {
-          Linking.openURL(url).catch(() => {});
+          Linking.openURL(url).catch(e =>
+            showError(
+              'Couldn’t open this link',
+              e,
+              'No app on this phone can open it.',
+            ),
+          );
         };
 
   return {

@@ -62,6 +62,7 @@ export const LoginScreen = () => {
           <TextField
             ref={passwordRef}
             label="Password"
+            placeholder="Enter your password"
             icon="lock"
             value={vm.password}
             onChangeText={vm.setPassword}

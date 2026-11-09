@@ -1,5 +1,4 @@
 import {useState} from 'react';
-import {Alert} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -13,10 +12,9 @@ import {
   type ProfileErrors,
 } from 'src/features/doctor/profileForm';
 import type {ProfileStackParamList} from 'src/navigation/types';
-import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
-import {ApiError} from 'src/services/api';
 import {toUpload} from 'src/services/fileService';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {showError} from 'src/utils/showError';
 
 // Shown Monday first; stored Sunday first (Date#getDay order).
 const DAYS = [
@@ -80,10 +78,7 @@ export const useEditProfileClinicViewModel = () => {
         navigation.goBack();
       }
     } catch (e) {
-      Alert.alert(
-        'Couldn’t save your profile',
-        e instanceof ApiError && !e.offline ? e.message : OFFLINE_MESSAGE,
-      );
+      showError('Couldn’t save your profile', e);
     } finally {
       setSaving(false);
     }

@@ -1,3 +1,4 @@
+import {OFFLINE_MESSAGE, SERVER_MESSAGE} from 'src/utils/errors';
 export const MIN_PASSWORD_LENGTH = 6;
 
 export type LoginError =
@@ -8,8 +9,7 @@ export type LoginError =
   | 'offline'
   | 'server';
 
-export const OFFLINE_MESSAGE = 'Can’t reach the server. Check your internet and try again.';
-export const SERVER_MESSAGE = 'Something went wrong on our side. Please try again.';
+export {OFFLINE_MESSAGE, SERVER_MESSAGE};
 
 export const LOGIN_ERROR_MESSAGES: Record<LoginError, string> = {
   missingIdentifier: 'Enter your email or registration ID.',

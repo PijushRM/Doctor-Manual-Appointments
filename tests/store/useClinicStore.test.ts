@@ -97,14 +97,12 @@ describe('addEntry', () => {
         },
       },
     }));
-    const id = await useClinicStore
-      .getState()
-      .addEntry({
-        patientId: oid(1),
-        docType: null,
-        file: null,
-        note: 'Crown prep',
-      });
+    const id = await useClinicStore.getState().addEntry({
+      patientId: oid(1),
+      docType: null,
+      file: null,
+      note: 'Crown prep',
+    });
 
     expect(calls[0]).toMatchObject({
       method: 'POST',
