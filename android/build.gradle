@@ -19,3 +19,17 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Release builds: notifee (appointment reminders) fails Android's per-library
+// resource check because its resources point at AppCompat colours it doesn't
+// declare. The app's own resource linking still checks everything, so skip
+// that one library check, for that one library only.
+subprojects { sub ->
+    if (sub.name == "notifee_react-native") {
+        sub.tasks.configureEach { task ->
+            if (task.name == "verifyReleaseResources") {
+                task.enabled = false
+            }
+        }
+    }
+}
