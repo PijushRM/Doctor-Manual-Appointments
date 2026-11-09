@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'bun:test';
 import {upcomingReminders} from 'src/features/appointments/reminders';
+import {useLanguageStore} from 'src/i18n';
 import {buildDemoData} from 'src/store/demoData';
 
 describe('upcomingReminders', () => {
@@ -23,5 +24,13 @@ describe('upcomingReminders', () => {
     expect(ids).not.toContain('demo-appt-1'); // 10:00 today, reminder was 9:45
     expect(ids).not.toContain('demo-appt-8'); // two days ago
     expect(ids).toHaveLength(6); // 11:30, 1 PM, 4 PM, two tomorrow, one Monday
+  });
+
+  it('writes the notification in Bengali when the app is in Bengali', () => {
+    useLanguageStore.setState({language: 'bn'});
+    const [first] = upcomingReminders(appointments, patients, now);
+    useLanguageStore.setState({language: 'en'});
+    expect(first.title).toBe('১৫ মিনিট পরে অ্যাপয়েন্টমেন্ট');
+    expect(first.body).toBe('Amit Das · ৪৫ বছর · সকাল ১১:৩০');
   });
 });

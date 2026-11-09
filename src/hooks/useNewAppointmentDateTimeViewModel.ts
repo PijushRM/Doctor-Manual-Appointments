@@ -6,7 +6,7 @@ import {
   type RouteProp,
 } from '@react-navigation/native';
 import type {StackNavigationProp} from '@react-navigation/stack';
-import {format, isSameDay, startOfDay} from 'date-fns';
+import {isSameDay, startOfDay} from 'date-fns';
 import {busyDayKeys} from 'src/features/appointments/calendar';
 import {
   atMinutes,
@@ -25,6 +25,9 @@ import type {
 import {useClinicStore} from 'src/store/useClinicStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {showError} from 'src/utils/showError';
+import {tr} from 'src/i18n';
+import {formatDate} from 'src/i18n/format';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 
 type Navigation = CompositeNavigationProp<
   StackNavigationProp<AppointmentsStackParamList, 'NewAppointmentDateTime'>,
@@ -59,24 +62,25 @@ export const useNewAppointmentDateTimeViewModel = () => {
   // Booking a closed day stays possible (an emergency); it just says so.
   const closed = !workingDays[day.getDay()];
   const after = isToday ? Math.max(minutes, minutesOfDay(now)) : minutes;
+  const t = tr(appointmentsText);
 
   const note = (() => {
     if (inPast) {
-      return `${formatTime(minutes)} has already passed — pick a later time.`;
+      return t.notePassed(formatTime(minutes));
     }
     if (clash) {
-      return `${formatTime(minutes)} overlaps a booking — pick another time.`;
+      return t.noteClash(formatTime(minutes));
     }
     if (closed) {
-      return `Clinic is closed on ${format(day, 'EEEE')}s.`;
+      return t.noteClosed(formatDate(day, 'EEEE'));
     }
     return booked.length
-      ? `Booked this day: ${booked.map(formatTime).join(', ')}`
-      : 'No bookings yet this day.';
+      ? t.noteBooked(booked.map(formatTime).join(', '))
+      : t.noteNone;
   })();
 
   return {
-    monthLabel: format(day, 'MMMM yyyy'),
+    monthLabel: formatDate(day, 'MMMM yyyy'),
     calendarOpen,
     busyDays: busyDayKeys(appointments),
     selectedDay: day,
@@ -88,21 +92,21 @@ export const useNewAppointmentDateTimeViewModel = () => {
     },
     dates: dateStrip(day, now).map(date => ({
       key: date.toISOString(),
-      weekday: format(date, 'EEE'),
-      dayOfMonth: format(date, 'd'),
-      label: format(date, 'EEEE d MMMM'),
+      weekday: formatDate(date, 'EEE'),
+      dayOfMonth: formatDate(date, 'd'),
+      label: formatDate(date, 'EEEE d MMMM'),
       selected: isSameDay(date, day),
       pick: () => setSlot(s => ({...s, day: startOfDay(date)})),
     })),
     minutes,
     setMinutes: (next: number) => setSlot(s => ({...s, minutes: next})),
-    quickPicks: (closed ? [] : freeSoon(booked, after, hours)).map(t => ({
-      label: formatTime(t),
-      pick: () => setSlot(s => ({...s, minutes: t})),
+    quickPicks: (closed ? [] : freeSoon(booked, after, hours)).map(free => ({
+      label: formatTime(free),
+      pick: () => setSlot(s => ({...s, minutes: free})),
     })),
     note,
     noteIsWarning: inPast || clash,
-    summary: `${format(day, 'EEE, d MMM yyyy')} · ${formatTime(minutes)}`,
+    summary: `${formatDate(day, 'EEE, d MMM yyyy')} · ${formatTime(minutes)}`,
     back: navigation.goBack,
     saving,
     // Overlaps only warn: the doctor may double-book on purpose.
@@ -123,7 +127,7 @@ export const useNewAppointmentDateTimeViewModel = () => {
         })
         .catch(e => {
           setSaving(false);
-          showError('Couldn’t save the appointment', e);
+          showError(t.saveFailed, e);
         });
     },
   };

@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'bun:test';
+import {useLanguageStore} from 'src/i18n';
 import {parseClinic, parseDetails} from 'src/features/doctor/profileForm';
 
 describe('parseDetails', () => {
@@ -57,5 +58,18 @@ describe('parseClinic', () => {
         parseClinic({...ok, workingDays: Array(7).fill(false)}).errors,
       ),
     ).toEqual(['days']);
+  });
+});
+
+describe('in Bengali', () => {
+  it('explains problems in Bengali', () => {
+    useLanguageStore.setState({language: 'bn'});
+    try {
+      expect(
+        parseDetails({name: ' ', qualifications: '', speciality: ''}).errors,
+      ).toEqual({name: 'আপনার নাম লিখুন।'});
+    } finally {
+      useLanguageStore.setState({language: 'en'});
+    }
   });
 });

@@ -4,6 +4,8 @@ import {AppText} from 'src/components/shared/AppText';
 import {Button} from 'src/components/shared/Button';
 import {Screen} from 'src/components/shared/Screen';
 import {useTheme} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {loadingText} from 'src/i18n/strings/auth';
 import {useAuthStore} from 'src/store/useAuthStore';
 import {syncAll, useSyncStore} from 'src/store/sync';
 
@@ -14,6 +16,7 @@ export const LoadingDataScreen = () => {
   const failed = useSyncStore(s => s.status === 'error');
   const reason = useSyncStore(s => s.error);
   const logOut = useAuthStore(s => s.logOut);
+  const t = tr(loadingText);
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -21,7 +24,7 @@ export const LoadingDataScreen = () => {
         {failed ? (
           <>
             <AppText variant="heading" style={styles.text}>
-              Couldn’t load your clinic
+              {t.failed}
             </AppText>
             <AppText color="textSubtle" style={styles.text}>
               {reason}
@@ -31,15 +34,18 @@ export const LoadingDataScreen = () => {
           <>
             <ActivityIndicator size="large" color={colors.textBase} />
             <AppText color="textSubtle" style={styles.text}>
-              Loading your clinic…
+              {t.loading}
             </AppText>
           </>
         )}
       </View>
       {failed && (
         <View style={styles.actions}>
-          <Button title="Try again" onPress={() => syncAll().catch(() => {})} />
-          <Button title="Log out" variant="outline" onPress={logOut} />
+          <Button
+            title={t.tryAgain}
+            onPress={() => syncAll().catch(() => {})}
+          />
+          <Button title={t.logOut} variant="outline" onPress={logOut} />
         </View>
       )}
     </Screen>

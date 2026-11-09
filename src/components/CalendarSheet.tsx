@@ -1,15 +1,18 @@
 import React, {useState} from 'react';
 import {Pressable, StyleSheet, View} from 'react-native';
-import {addMonths, format, startOfMonth} from 'date-fns';
+import {addMonths, startOfMonth} from 'date-fns';
 import {FontFamily} from 'src/configs/fonts';
 import type {Theme} from 'src/configs/theme';
 import {
   canGoToPreviousMonth,
   monthWeeks,
-  WEEKDAY_INITIALS,
+  weekdayInitials,
   type CalendarCell,
 } from 'src/features/appointments/calendar';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {formatDate, localDigits} from 'src/i18n/format';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import {AppText} from './shared/AppText';
 import {Button} from './shared/Button';
 import {Icon} from './shared/Icon';
@@ -22,14 +25,16 @@ type Props = {
   onClose: () => void;
 };
 
-const dayLabel = (cell: CalendarCell) =>
-  [
-    format(cell.date!, 'EEEE d MMMM'),
-    cell.busy && 'has appointments',
-    cell.today && 'today',
+const dayLabel = (cell: CalendarCell) => {
+  const t = tr(appointmentsText);
+  return [
+    formatDate(cell.date!, 'EEEE d MMMM'),
+    cell.busy && t.hasAppointments,
+    cell.today && t.today,
   ]
     .filter(Boolean)
     .join(', ');
+};
 
 // Artboard: doctor/DocAdd2Cal. Opens on the selected day's month.
 export const CalendarSheet = ({selected, busyDays, onPick, onClose}: Props) => {
@@ -38,17 +43,18 @@ export const CalendarSheet = ({selected, busyDays, onPick, onClose}: Props) => {
   const [month, setMonth] = useState(() => startOfMonth(selected));
   const today = new Date();
   const canGoBack = canGoToPreviousMonth(month, today);
+  const t = tr(appointmentsText);
 
   return (
-    <Sheet label="Choose a date" onClose={onClose}>
+    <Sheet label={t.chooseDate} onClose={onClose}>
       <View style={styles.header}>
         <AppText variant="heading" accessibilityRole="header">
-          {format(month, 'MMMM yyyy')}
+          {formatDate(month, 'MMMM yyyy')}
         </AppText>
         <View style={styles.arrows}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Previous month"
+            accessibilityLabel={t.previousMonth}
             accessibilityState={{disabled: !canGoBack}}
             disabled={!canGoBack}
             onPress={() => setMonth(m => addMonths(m, -1))}
@@ -57,7 +63,7 @@ export const CalendarSheet = ({selected, busyDays, onPick, onClose}: Props) => {
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Next month"
+            accessibilityLabel={t.nextMonth}
             onPress={() => setMonth(m => addMonths(m, 1))}
             style={styles.arrow}>
             <Icon name="chevronRight" size={20} color={colors.textBase} />
@@ -66,7 +72,7 @@ export const CalendarSheet = ({selected, busyDays, onPick, onClose}: Props) => {
       </View>
 
       <View style={styles.week}>
-        {WEEKDAY_INITIALS.map((d, i) => (
+        {weekdayInitials().map((d, i) => (
           <AppText key={i} variant="caption" style={styles.weekday}>
             {d}
           </AppText>
@@ -100,7 +106,7 @@ export const CalendarSheet = ({selected, busyDays, onPick, onClose}: Props) => {
                       ? 'textDim'
                       : 'textBase'
                   }>
-                  {cell.date.getDate()}
+                  {localDigits(cell.date.getDate())}
                 </AppText>
                 {cell.busy && (
                   <View
@@ -121,9 +127,9 @@ export const CalendarSheet = ({selected, busyDays, onPick, onClose}: Props) => {
 
       <View style={styles.legend}>
         <View style={styles.dot} />
-        <AppText variant="caption">Has appointments · outlined = today</AppText>
+        <AppText variant="caption">{t.calendarLegend}</AppText>
       </View>
-      <Button title="Done" onPress={onClose} />
+      <Button title={t.done} onPress={onClose} />
     </Sheet>
   );
 };

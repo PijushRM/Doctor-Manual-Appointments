@@ -5,6 +5,8 @@ import notifee, {
   TriggerType,
 } from '@notifee/react-native';
 import type {Reminder} from 'src/features/appointments/reminders';
+import {tr} from 'src/i18n';
+import {remindersText} from 'src/i18n/strings/reminders';
 import {requestPermission} from './permissions';
 
 const CHANNEL_ID = 'appointment-reminders';
@@ -27,7 +29,7 @@ export const syncReminders = async (reminders: Reminder[]) => {
   }
   await notifee.createChannel({
     id: CHANNEL_ID,
-    name: 'Appointment reminders',
+    name: tr(remindersText).channel,
     importance: AndroidImportance.HIGH,
   });
   for (const r of reminders) {

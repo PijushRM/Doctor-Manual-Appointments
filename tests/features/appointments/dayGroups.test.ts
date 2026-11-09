@@ -5,6 +5,7 @@ import {
   groupByDay,
   patientCountLabel,
 } from 'src/features/appointments/dayGroups';
+import {useLanguageStore} from 'src/i18n';
 import {buildDemoData} from 'src/store/demoData';
 
 // Friday 24 Oct 2025, as on the canvas.
@@ -86,6 +87,17 @@ describe('patientCountLabel', () => {
   it('pluralises', () => {
     expect(patientCountLabel(1)).toBe('1 patient');
     expect(patientCountLabel(2)).toBe('2 patients');
+  });
+
+  it('reads in Bengali with Bengali digits', () => {
+    useLanguageStore.setState({language: 'bn'});
+    try {
+      expect(patientCountLabel(12)).toBe('১২ জন রোগী');
+      const [today] = groupByDay(appointments, patients, 'today', now);
+      expect(today.title).toStartWith('আজ, ২৪ অক্টো');
+    } finally {
+      useLanguageStore.setState({language: 'en'});
+    }
   });
 });
 

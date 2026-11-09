@@ -3,6 +3,7 @@ import {upcomingReminders} from 'src/features/appointments/reminders';
 import {syncReminders} from 'src/services/notificationService';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {useLanguage} from 'src/i18n';
 
 // Keeps the phone's scheduled reminders in step with the appointments and the
 // Settings switch. Runs at app start and after every booking or toggle.
@@ -10,6 +11,8 @@ export const useReminderSync = () => {
   const alerts = useDoctorStore(s => s.alerts);
   const appointments = useClinicStore(s => s.appointments);
   const patients = useClinicStore(s => s.patients);
+  // Reminder text is in the app language: re-schedule when it changes.
+  const language = useLanguage();
 
   useEffect(() => {
     const reminders = alerts
@@ -19,5 +22,5 @@ export const useReminderSync = () => {
     syncReminders(reminders).catch(e =>
       console.warn('[Appointment reminders]', e),
     );
-  }, [alerts, appointments, patients]);
+  }, [alerts, appointments, patients, language]);
 };

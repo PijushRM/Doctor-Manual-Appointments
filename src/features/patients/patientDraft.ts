@@ -1,3 +1,5 @@
+import {tr} from 'src/i18n';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import type {NewPatient, Patient} from 'src/types/clinic';
 
 // What the New Appointment form holds while the doctor types.
@@ -21,11 +23,15 @@ const MIN_PHONE_DIGITS = 10;
 const MAX_PHONE_DIGITS = 13; // +91 and a 10-digit number
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const DRAFT_ERROR_MESSAGES: Record<keyof PatientDraft, string> = {
-  name: 'Enter the patient’s full name.',
-  age: `Age 0–${MAX_AGE}`,
-  phone: 'Enter a valid phone number.',
-  email: 'Enter a valid email or leave it blank.',
+// In the current language: call when checking the form.
+export const draftErrorMessages = (): Record<keyof PatientDraft, string> => {
+  const t = tr(appointmentsText);
+  return {
+    name: t.errName,
+    age: t.errAge(MAX_AGE),
+    phone: t.errPhone,
+    email: t.errEmail,
+  };
 };
 
 export const phoneDigits = (phone: string) => phone.replace(/\D/g, '');
@@ -53,17 +59,18 @@ export const parsePatientDraft = (
   const email = draft.email.trim();
 
   const errors: DraftErrors = {};
+  const messages = draftErrorMessages();
   if (name.length < 2) {
-    errors.name = DRAFT_ERROR_MESSAGES.name;
+    errors.name = messages.name;
   }
   if (!/^\d{1,3}$/.test(age) || Number(age) > MAX_AGE) {
-    errors.age = DRAFT_ERROR_MESSAGES.age;
+    errors.age = messages.age;
   }
   if (!isValidPhone(phone)) {
-    errors.phone = DRAFT_ERROR_MESSAGES.phone;
+    errors.phone = messages.phone;
   }
   if (email && !isValidEmail(email)) {
-    errors.email = DRAFT_ERROR_MESSAGES.email;
+    errors.email = messages.email;
   }
   if (Object.keys(errors).length) {
     return {patient: null, errors};

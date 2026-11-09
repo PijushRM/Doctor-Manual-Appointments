@@ -7,13 +7,14 @@ import {
 import type {StackNavigationProp} from '@react-navigation/stack';
 import {initials} from 'src/features/patients/patients';
 import {
-  ENTRY_ERRORS,
-  ENTRY_TYPES,
   entryError,
+  entryErrorMessage,
+  entryTypes,
   fileBadge,
   formatSize,
   photoName,
   saveLabel,
+  type EntryErrorKey,
   type EntryType,
 } from 'src/features/patients/recordEntry';
 import type {PatientsStackParamList} from 'src/navigation/types';
@@ -24,6 +25,8 @@ import {
   takePhoto,
   type PickedFile,
 } from 'src/services/fileService';
+import {tr} from 'src/i18n';
+import {patientsText} from 'src/i18n/strings/patients';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {showError} from 'src/utils/showError';
 
@@ -41,7 +44,7 @@ export const useUploadNoteViewModel = () => {
   );
   const [file, setFile] = useState<PickedFile | null>(null);
   const [note, setNote] = useState('');
-  const [error, setError] = useState<keyof typeof ENTRY_ERRORS | null>(null);
+  const [error, setError] = useState<EntryErrorKey | null>(null);
   const [saving, setSaving] = useState(false);
 
   if (!patient) {
@@ -49,6 +52,7 @@ export const useUploadNoteViewModel = () => {
   }
   const firstName = patient.name.split(' ')[0];
   const isNote = type === 'note';
+  const t = tr(patientsText);
 
   const addFile = async (source: 'camera' | 'files') => {
     try {
@@ -59,9 +63,7 @@ export const useUploadNoteViewModel = () => {
       }
     } catch (e) {
       showError(
-        e instanceof FileTooLargeError
-          ? 'File too large'
-          : 'Couldn’t add the file',
+        e instanceof FileTooLargeError ? t.fileTooLarge : t.addFileFailed,
         e,
       );
     }
@@ -91,23 +93,21 @@ export const useUploadNoteViewModel = () => {
       });
       navigation.navigate('PatientProfile', {patientId, addedEntryId: id});
     } catch (e) {
-      showError(
-        isNote ? 'Couldn’t save the note' : 'Couldn’t save the file',
-        e,
-      );
+      showError(isNote ? t.saveNoteFailed : t.saveFileFailed, e);
     } finally {
       setSaving(false);
     }
   };
 
   return {
+    t,
     patientInitials: initials(patient.name),
     patientName: patient.name,
-    types: ENTRY_TYPES.map(t => ({
-      ...t,
-      selected: t.key === type,
+    types: entryTypes().map(entry => ({
+      ...entry,
+      selected: entry.key === type,
       pick: () => {
-        setType(t.key);
+        setType(entry.key);
         setError(null);
       },
     })),
@@ -115,9 +115,9 @@ export const useUploadNoteViewModel = () => {
     file: file && {
       badge: fileBadge(file),
       name: file.fromCamera ? photoName(patient.name, new Date()) : file.name,
-      details: `${formatSize(file.size)} · ready to upload`,
+      details: t.readyToUpload(formatSize(file.size)),
     },
-    fileError: error === 'file' ? ENTRY_ERRORS.file : undefined,
+    fileError: error === 'file' ? entryErrorMessage('file') : undefined,
     removeFile: () => setFile(null),
     takePhoto: () => {
       addFile('camera').catch(() => {});
@@ -130,9 +130,9 @@ export const useUploadNoteViewModel = () => {
       setNote(text);
       setError(null);
     },
-    noteHint: isNote ? 'REQUIRED' : 'OPTIONAL',
-    noteError: error === 'note' ? ENTRY_ERRORS.note : undefined,
-    footnote: `This will appear in ${firstName}'s activity with today's date and time.`,
+    noteHint: isNote ? t.required : t.optional,
+    noteError: error === 'note' ? entryErrorMessage('note') : undefined,
+    footnote: t.footnote(firstName),
     saveLabel: saveLabel(type),
     saving,
     save: () => {

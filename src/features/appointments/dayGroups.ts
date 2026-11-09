@@ -1,5 +1,8 @@
 import {format, isSameWeek, isSameYear, startOfDay} from 'date-fns';
 import {initials, isNewPatient} from 'src/features/patients/patients';
+import {tr} from 'src/i18n';
+import {clockTime, formatDate} from 'src/i18n/format';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import type {Appointment, Patient} from 'src/types/clinic';
 
 export type HomeTab = 'today' | 'upcoming' | 'all';
@@ -45,14 +48,16 @@ export const countThisWeek = (appointments: Appointment[], now: Date) =>
   ).length;
 
 export const patientCountLabel = (count: number) =>
-  `${count} ${count === 1 ? 'patient' : 'patients'}`;
+  tr(appointmentsText).patientCount(count);
 
 const dayLabel = (date: Date, when: When, now: Date) => {
   if (when === 'today') {
-    return `TODAY, ${format(date, 'd MMM')}`.toUpperCase();
+    return tr(appointmentsText)
+      .todayGroup(formatDate(date, 'd MMM'))
+      .toUpperCase();
   }
   const pattern = isSameYear(date, now) ? 'EEE, d MMM' : 'EEE, d MMM yyyy';
-  return format(date, pattern).toUpperCase();
+  return formatDate(date, pattern).toUpperCase();
 };
 
 // Today first, then upcoming days soonest first, then past days latest first
@@ -87,7 +92,10 @@ export const groupByDay = (
       patientId: patient.id,
       initials: initials(patient.name),
       name: patient.name,
-      subtitle: `${patient.age} yrs · ${format(date, 'h:mm a')}`,
+      subtitle: tr(appointmentsText).yrsAt(
+        patient.age,
+        clockTime(date.getHours() * 60 + date.getMinutes()),
+      ),
       isNew: isNewPatient(patient, now),
     });
     days.set(key, day);
@@ -98,7 +106,7 @@ export const groupByDay = (
   const ordered = [...list.filter(([, d]) => d.when !== 'past'), ...past];
 
   return ordered.map(([key, day]) => {
-    const prefix = past[0]?.[0] === key ? 'EARLIER · ' : '';
+    const prefix = past[0]?.[0] === key ? tr(appointmentsText).earlier : '';
     return {
       key,
       title: `${prefix}${dayLabel(

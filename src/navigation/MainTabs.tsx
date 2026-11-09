@@ -25,6 +25,8 @@ import type {
   PatientsStackParamList,
   ProfileStackParamList,
 } from './types';
+import {tr} from 'src/i18n';
+import {commonText} from 'src/i18n/strings/common';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const HomeStack = createStackNavigator<HomeStackParamList>();
@@ -89,28 +91,34 @@ const tabIcon =
   ({color}: {color: string}) =>
     <Icon name={name} color={color} />;
 
+// Labels are read when the tab bar draws (it redraws on a language change).
 const TABS: {
   name: keyof MainTabParamList;
-  label: string;
+  label: (t: typeof commonText.en) => string;
   icon: ReturnType<typeof tabIcon>;
   component: React.ComponentType;
 }[] = [
-  {name: 'HomeTab', label: 'Home', icon: tabIcon('home'), component: HomeTab},
+  {
+    name: 'HomeTab',
+    label: t => t.tabHome,
+    icon: tabIcon('home'),
+    component: HomeTab,
+  },
   {
     name: 'AppointmentsTab',
-    label: 'Appointments',
+    label: t => t.tabAppointments,
     icon: tabIcon('calendar'),
     component: AppointmentsTab,
   },
   {
     name: 'PatientsTab',
-    label: 'Patients',
+    label: t => t.tabPatients,
     icon: tabIcon('patients'),
     component: PatientsTab,
   },
   {
     name: 'ProfileTab',
-    label: 'Profile',
+    label: t => t.tabProfile,
     icon: tabIcon('profile'),
     component: ProfileTab,
   },
@@ -120,6 +128,7 @@ const TABS: {
 export const MainTabs = () => {
   const {colors} = useTheme();
   const {bottom} = useSafeAreaInsets();
+  const t = tr(commonText);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -142,8 +151,8 @@ export const MainTabs = () => {
           name={tab.name}
           component={tab.component}
           options={{
-            tabBarLabel: tab.label,
-            tabBarAccessibilityLabel: tab.label,
+            tabBarLabel: tab.label(t),
+            tabBarAccessibilityLabel: tab.label(t),
             tabBarIcon: tab.icon,
           }}
         />

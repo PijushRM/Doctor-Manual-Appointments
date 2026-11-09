@@ -1,9 +1,11 @@
 import {useState} from 'react';
 import {Alert} from 'react-native';
 import {
-  FORGOT_PASSWORD_MESSAGE,
-  LOGIN_ERROR_MESSAGES,
+  forgotPasswordMessage,
+  loginErrorMessage,
 } from 'src/features/auth/credentials';
+import {tr} from 'src/i18n';
+import {loginText} from 'src/i18n/strings/auth';
 import {useAuthStore} from 'src/store/useAuthStore';
 
 type Mode = 'login' | 'register';
@@ -26,34 +28,34 @@ export const useLoginViewModel = () => {
       const result = await logIn(identifier, password, mode);
       // On success the root navigator swaps to the app and this screen unmounts.
       if (result) {
-        setError(LOGIN_ERROR_MESSAGES[result]);
+        setError(loginErrorMessage(result));
         setBusy(false);
       }
     } catch {
-      setError(LOGIN_ERROR_MESSAGES.server);
+      setError(loginErrorMessage('server'));
       setBusy(false);
     }
   };
 
   const isRegister = mode === 'register';
+  const t = tr(loginText);
   return {
+    t,
     identifier,
     password,
     showPassword,
     error,
     busy,
     isRegister,
-    title: isRegister ? 'Create account' : 'Log in',
+    title: isRegister ? t.createAccount : t.logIn,
     buttonTitle: busy
       ? isRegister
-        ? 'Creating account…'
-        : 'Logging in…'
+        ? t.creatingAccount
+        : t.loggingIn
       : isRegister
-      ? 'Create account'
-      : 'Log in',
-    switchModeLabel: isRegister
-      ? 'Already have an account? Log in'
-      : 'New here? Create an account',
+      ? t.createAccount
+      : t.logIn,
+    switchModeLabel: isRegister ? t.haveAccount : t.newHere,
     switchMode: () => {
       setMode(m => (m === 'login' ? 'register' : 'login'));
       setError(null);
@@ -71,6 +73,6 @@ export const useLoginViewModel = () => {
       submit().catch(() => setBusy(false));
     },
     forgotPassword: () =>
-      Alert.alert('Forgot password?', FORGOT_PASSWORD_MESSAGE),
+      Alert.alert(t.forgotPassword, forgotPasswordMessage()),
   };
 };

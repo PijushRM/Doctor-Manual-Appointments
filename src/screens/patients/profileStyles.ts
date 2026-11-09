@@ -76,6 +76,23 @@ export const makeStyles = (theme: Theme) =>
       justifyContent: 'center',
     },
     eventText: {flex: 1, minWidth: 0},
+    // "Send SMS" on an upcoming booking, at the row's right edge.
+    smsButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+    },
+    smsButtonSent: {
+      backgroundColor: theme.colors.chip,
+      borderColor: theme.colors.ring,
+    },
+    smsButtonBusy: {opacity: 0.6},
     eventTop: {flexDirection: 'row', justifyContent: 'space-between', gap: 8},
     eventTitle: {fontSize: 15},
     eventDetail: {marginTop: 2, fontFamily: FontFamily.medium},

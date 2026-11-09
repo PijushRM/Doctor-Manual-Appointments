@@ -12,6 +12,7 @@ import {
   type ClinicHours,
 } from 'src/constants/appointments';
 import type {Appointment} from 'src/types/clinic';
+import {clockTime} from 'src/i18n/format';
 
 // Times are minutes from midnight (0–1439); days are Dates at local midnight.
 export type TimeParts = {h12: number; m: number; pm: boolean};
@@ -24,10 +25,8 @@ export const splitTime = (minutes: number): TimeParts => {
 export const joinTime = ({h12, m, pm}: TimeParts) =>
   ((h12 % 12) + (pm ? 12 : 0)) * 60 + m;
 
-export const formatTime = (minutes: number) => {
-  const {h12, m, pm} = splitTime(minutes);
-  return `${h12}:${String(m).padStart(2, '0')} ${pm ? 'PM' : 'AM'}`;
-};
+// "10:30 AM", or "সকাল ১০:৩০" in Bengali.
+export const formatTime = (minutes: number) => clockTime(minutes);
 
 export const minutesOfDay = (date: Date) =>
   date.getHours() * 60 + date.getMinutes();

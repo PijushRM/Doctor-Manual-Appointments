@@ -1,4 +1,7 @@
-import {OFFLINE_MESSAGE, SERVER_MESSAGE} from 'src/utils/errors';
+import {tr} from 'src/i18n';
+import {authMessages} from 'src/i18n/strings/auth';
+import {errorText} from 'src/i18n/strings/errors';
+
 export const MIN_PASSWORD_LENGTH = 6;
 
 export type LoginError =
@@ -9,19 +12,21 @@ export type LoginError =
   | 'offline'
   | 'server';
 
-export {OFFLINE_MESSAGE, SERVER_MESSAGE};
-
-export const LOGIN_ERROR_MESSAGES: Record<LoginError, string> = {
-  missingIdentifier: 'Enter your email or registration ID.',
-  shortPassword: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
-  mismatch: 'Email/ID or password is incorrect.',
-  exists: 'An account with this email or ID already exists. Log in instead.',
-  offline: OFFLINE_MESSAGE,
-  server: SERVER_MESSAGE,
+// In the current language: call when showing the message.
+export const loginErrorMessage = (error: LoginError): string => {
+  const t = tr(authMessages);
+  const e = tr(errorText);
+  return {
+    missingIdentifier: t.missingIdentifier,
+    shortPassword: t.shortPassword(MIN_PASSWORD_LENGTH),
+    mismatch: t.mismatch,
+    exists: t.exists,
+    offline: e.offline,
+    server: e.server,
+  }[error];
 };
 
-export const FORGOT_PASSWORD_MESSAGE =
-  'Password reset isn’t available in the app yet. Please contact your clinic admin.';
+export const forgotPasswordMessage = () => tr(authMessages).forgotPassword;
 
 export const normalizeIdentifier = (identifier: string) =>
   identifier.trim().toLowerCase();
@@ -46,12 +51,16 @@ export type PasswordChangeError =
   | 'offline'
   | 'server';
 
-export const PASSWORD_CHANGE_MESSAGES: Record<PasswordChangeError, string> = {
-  wrongCurrent: 'Your current password is incorrect.',
-  shortPassword: LOGIN_ERROR_MESSAGES.shortPassword,
-  notMatching: 'The new passwords don’t match.',
-  offline: OFFLINE_MESSAGE,
-  server: SERVER_MESSAGE,
+export const passwordChangeMessage = (error: PasswordChangeError): string => {
+  const t = tr(authMessages);
+  const e = tr(errorText);
+  return {
+    wrongCurrent: t.wrongCurrent,
+    shortPassword: t.shortPassword(MIN_PASSWORD_LENGTH),
+    notMatching: t.notMatching,
+    offline: e.offline,
+    server: e.server,
+  }[error];
 };
 
 // Checked on the phone first so typos don't cost a round trip;

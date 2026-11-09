@@ -1,22 +1,32 @@
 import {format} from 'date-fns';
+import {tr} from 'src/i18n';
+import {localDigits} from 'src/i18n/format';
+import {patientsText} from 'src/i18n/strings/patients';
 import type {DocType, RecordEntry, StoredFile} from 'src/types/clinic';
 
 // The Upload screen's type chips; "note" = Note only.
 export type EntryType = DocType | 'note';
 
-export const ENTRY_TYPES: {key: EntryType; label: string}[] = [
-  {key: 'prescription', label: 'Prescription'},
-  {key: 'report', label: 'Report'},
-  {key: 'xray', label: 'X-ray / Photo'},
-  {key: 'other', label: 'Other'},
-  {key: 'note', label: 'Note only'},
-];
+// In the current language: call when drawing the chips.
+export const entryTypes = (): {key: EntryType; label: string}[] => {
+  const t = tr(patientsText);
+  return [
+    {key: 'prescription', label: t.typePrescription},
+    {key: 'report', label: t.typeReport},
+    {key: 'xray', label: t.typeXray},
+    {key: 'other', label: t.typeOther},
+    {key: 'note', label: t.typeNote},
+  ];
+};
 
-const NOUN: Record<DocType, string> = {
-  prescription: 'Prescription',
-  report: 'Report',
-  xray: 'X-ray / photo',
-  other: 'File',
+const noun = (docType: DocType | null) => {
+  const t = tr(patientsText);
+  return {
+    prescription: t.nounPrescription,
+    report: t.nounReport,
+    xray: t.nounXray,
+    other: t.nounOther,
+  }[docType ?? 'other'];
 };
 
 export const ACCEPTED_MIME_TYPES = [
@@ -25,9 +35,11 @@ export const ACCEPTED_MIME_TYPES = [
   'image/png',
 ];
 
-export const ENTRY_ERRORS = {
-  file: 'Add a photo or file first.',
-  note: 'Write the note first.',
+export type EntryErrorKey = 'file' | 'note';
+
+export const entryErrorMessage = (key: EntryErrorKey) => {
+  const t = tr(patientsText);
+  return key === 'file' ? t.errorFile : t.errorNote;
 };
 
 // A file is needed unless it's a note; a note is required only for "Note only".
@@ -35,30 +47,38 @@ export const entryError = (
   type: EntryType,
   file: unknown,
   note: string,
-): keyof typeof ENTRY_ERRORS | null => {
+): EntryErrorKey | null => {
   if (type === 'note') {
     return note.trim() ? null : 'note';
   }
   return file ? null : 'file';
 };
 
-export const saveLabel = (type: EntryType) =>
-  type === 'note'
-    ? 'Save note'
-    : `Upload ${ENTRY_TYPES.find(t => t.key === type)!.label.toLowerCase()}`;
+export const saveLabel = (type: EntryType) => {
+  const t = tr(patientsText);
+  return type === 'note'
+    ? t.saveNote
+    : t.uploadType(entryTypes().find(e => e.key === type)!.label);
+};
 
-export const uploadTitle = (docType: DocType) => `${NOUN[docType]} uploaded`;
+export const uploadTitle = (docType: DocType) =>
+  tr(patientsText).uploaded(noun(docType));
 
 // "Prescription added to Amit's activity"
-export const addedMessage = (entry: RecordEntry, patientName: string) =>
-  `${entry.docType ? NOUN[entry.docType] : 'Note'} added to ${
-    patientName.trim().split(/\s+/)[0]
-  }'s activity`;
+export const addedMessage = (entry: RecordEntry, patientName: string) => {
+  const t = tr(patientsText);
+  return t.addedTo(
+    entry.docType ? noun(entry.docType) : t.nounNote,
+    patientName.trim().split(/\s+/)[0],
+  );
+};
 
-export const formatSize = (bytes: number) =>
-  bytes < 1024 * 1024
-    ? `${Math.max(1, Math.round(bytes / 1024))} KB`
-    : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+export const formatSize = (bytes: number) => {
+  const t = tr(patientsText);
+  return bytes < 1024 * 1024
+    ? t.kb(localDigits(Math.max(1, Math.round(bytes / 1024))))
+    : t.mb(localDigits((bytes / (1024 * 1024)).toFixed(1)));
+};
 
 // The little "PDF" / "JPG" / "PNG" badge on the file card.
 export const fileBadge = (file: Pick<StoredFile, 'name' | 'mimeType'>) => {

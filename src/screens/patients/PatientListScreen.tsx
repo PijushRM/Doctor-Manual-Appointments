@@ -7,6 +7,7 @@ import {Screen} from 'src/components/shared/Screen';
 import type {PatientListRow} from 'src/features/patients/activity';
 import {usePatientListViewModel} from 'src/hooks/usePatientListViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
+import {localDigits} from 'src/i18n/format';
 import {makeStyles} from './styles';
 
 // Artboard: doctor/DocPatientList
@@ -14,11 +15,17 @@ export const PatientListScreen = () => {
   const vm = usePatientListViewModel();
   const theme = useTheme();
   const styles = useStyles(makeStyles);
+  const {t} = vm;
 
   const renderRow = ({item, index}: {item: PatientListRow; index: number}) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${item.name}, ${item.age} years. ${item.activity}, ${item.when}`}
+      accessibilityLabel={t.rowLabel(
+        item.name,
+        localDigits(item.age),
+        item.activity,
+        item.when,
+      )}
       onPress={() => vm.openPatient(item.id)}
       style={[styles.row, index < vm.rows.length - 1 && styles.divider]}>
       <View style={styles.avatar}>
@@ -29,7 +36,10 @@ export const PatientListScreen = () => {
       <View style={styles.text}>
         <View style={styles.topLine}>
           <AppText variant="bodyStrong" numberOfLines={1} style={styles.name}>
-            {item.name} <AppText variant="caption">· {item.age} yrs</AppText>
+            {item.name}{' '}
+            <AppText variant="caption">
+              · {t.ageShort(localDigits(item.age))}
+            </AppText>
           </AppText>
           <AppText variant="caption">{item.when}</AppText>
         </View>
@@ -53,9 +63,9 @@ export const PatientListScreen = () => {
         <View style={styles.titleRow}>
           {/* The design colours "ients", not the whole word. */}
           <AppText variant="headline" accessibilityRole="header">
-            Pat
+            {t.titleStart}
             <AppText variant="headline" color="textLink">
-              ients
+              {t.titleAccent}
             </AppText>
           </AppText>
           <AppText variant="caption">{vm.countLabel}</AppText>
@@ -66,9 +76,9 @@ export const PatientListScreen = () => {
           <TextInput
             value={vm.query}
             onChangeText={vm.setQuery}
-            placeholder="Search name or phone"
+            placeholder={t.searchPlaceholder}
             placeholderTextColor={theme.colors.textDim}
-            accessibilityLabel="Search patients"
+            accessibilityLabel={t.searchLabel}
             autoCorrect={false}
             returnKeyType="search"
             clearButtonMode="while-editing"
@@ -76,7 +86,7 @@ export const PatientListScreen = () => {
           />
         </View>
         <AppText variant="caption" style={styles.sorted}>
-          SORTED BY LAST ACTIVITY
+          {t.sorted}
         </AppText>
 
         <FlatList

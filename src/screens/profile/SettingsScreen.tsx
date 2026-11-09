@@ -4,12 +4,19 @@ import {AppText} from 'src/components/shared/AppText';
 import {BackHeader} from 'src/components/shared/BackHeader';
 import {Icon, type IconName} from 'src/components/shared/Icon';
 import {Screen} from 'src/components/shared/Screen';
+import {Sheet} from 'src/components/shared/Sheet';
 import type {Theme} from 'src/configs/theme';
 import {useSettingsViewModel} from 'src/hooks/useSettingsViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
 import {makeStyles as makeProfileStyles} from './styles';
 
-type Row = {icon: IconName; label: string; onPress: () => void; on?: boolean};
+type Row = {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  on?: boolean; // a switch
+  value?: string; // shown before the chevron, e.g. the current language
+};
 
 // Artboard: doctor/DocProfile2. "Help & support" is left out until there's a
 // real support contact.
@@ -18,6 +25,7 @@ export const SettingsScreen = () => {
   const {colors} = useTheme();
   const shared = useStyles(makeProfileStyles);
   const styles = useStyles(makeStyles);
+  const {t} = vm;
 
   const card = (rows: Row[]) => (
     <View style={shared.card}>
@@ -28,6 +36,7 @@ export const SettingsScreen = () => {
             key={row.label}
             accessibilityRole={isSwitch ? 'switch' : 'button'}
             accessibilityState={isSwitch ? {checked: row.on} : undefined}
+            accessibilityValue={row.value ? {text: row.value} : undefined}
             onPress={row.onPress}
             style={[shared.row, i < rows.length - 1 && shared.divider]}>
             <View style={shared.rowIcon}>
@@ -42,7 +51,14 @@ export const SettingsScreen = () => {
                 <View style={[styles.thumb, row.on && styles.thumbOn]} />
               </View>
             ) : (
-              <Icon name="chevronRight" size={20} color={colors.textBase} />
+              <>
+                {row.value && (
+                  <AppText variant="label" color="textSubtle">
+                    {row.value}
+                  </AppText>
+                )}
+                <Icon name="chevronRight" size={20} color={colors.textBase} />
+              </>
             )}
           </Pressable>
         );
@@ -52,32 +68,43 @@ export const SettingsScreen = () => {
 
   return (
     <Screen>
-      <BackHeader onBack={vm.back} backLabel="Back to profile" />
+      <BackHeader onBack={vm.back} backLabel={t.back} />
       <ScrollView contentContainerStyle={styles.content}>
         <AppText variant="headline" accessibilityRole="header">
-          Settings
+          {t.title}
         </AppText>
         <AppText variant="heading" accessibilityRole="header">
-          Practice
+          {t.practice}
         </AppText>
         {card([
           {
             icon: 'calendar',
-            label: 'Availability & slots',
+            label: t.availability,
             onPress: vm.openAvailability,
           },
           {
             icon: 'bell',
-            label: 'Appointment alerts',
+            label: t.alerts,
             onPress: vm.toggleAlerts,
             on: vm.alerts,
           },
         ])}
         <AppText variant="heading" accessibilityRole="header">
-          Account
+          {t.app}
         </AppText>
         {card([
-          {icon: 'lock', label: 'Change password', onPress: vm.changePassword},
+          {
+            icon: 'globe',
+            label: t.language,
+            value: vm.languageName,
+            onPress: vm.openLanguage,
+          },
+        ])}
+        <AppText variant="heading" accessibilityRole="header">
+          {t.account}
+        </AppText>
+        {card([
+          {icon: 'lock', label: t.changePassword, onPress: vm.changePassword},
         ])}
 
         <Pressable
@@ -86,10 +113,46 @@ export const SettingsScreen = () => {
           style={({pressed}) => [styles.logOut, pressed && styles.pressed]}>
           <Icon name="logout" size={20} color={colors.textDanger} />
           <AppText variant="button" color="textDanger">
-            Log out
+            {t.logOut}
           </AppText>
         </Pressable>
       </ScrollView>
+
+      {vm.languageOpen && (
+        <Sheet label={t.chooseLanguage} onClose={vm.closeLanguage}>
+          <AppText variant="heading" accessibilityRole="header">
+            {t.chooseLanguage}
+          </AppText>
+          <AppText variant="caption" style={styles.sheetHint}>
+            {t.languageHint}
+          </AppText>
+          <View style={shared.card}>
+            {vm.languages.map((l, i) => (
+              <Pressable
+                key={l.key}
+                accessibilityRole="radio"
+                accessibilityState={{selected: l.selected}}
+                onPress={l.pick}
+                style={[
+                  shared.row,
+                  i < vm.languages.length - 1 && shared.divider,
+                ]}>
+                <AppText variant="bodyStrong" style={shared.rowText}>
+                  {l.name}
+                </AppText>
+                {l.selected && (
+                  <Icon
+                    name="check"
+                    size={20}
+                    strokeWidth={2.2}
+                    color={colors.textLink}
+                  />
+                )}
+              </Pressable>
+            ))}
+          </View>
+        </Sheet>
+      )}
     </Screen>
   );
 };
@@ -136,4 +199,5 @@ const makeStyles = (theme: Theme) =>
       gap: 8,
     },
     pressed: {transform: [{scale: 0.97}]},
+    sheetHint: {marginTop: 4, marginBottom: 16},
   });

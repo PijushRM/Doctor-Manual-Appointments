@@ -2,6 +2,8 @@ import React from 'react';
 import {Pressable, StyleSheet, View} from 'react-native';
 import type {Theme} from 'src/configs/theme';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {homeText} from 'src/i18n/strings/home';
 import {AppText} from './AppText';
 import {Icon} from './Icon';
 
@@ -25,10 +27,11 @@ export const PatientRow = ({
 }: Props) => {
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const t = tr(homeText);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${name}${isNew ? ', new' : ''}, ${subtitle}`}
+      accessibilityLabel={`${name}${isNew ? t.newA11y : ''}, ${subtitle}`}
       onPress={onPress}
       style={[styles.row, divider && styles.divider]}>
       <View style={styles.avatar}>
@@ -44,7 +47,7 @@ export const PatientRow = ({
           {isNew && (
             <View style={styles.tag}>
               <AppText variant="caption" color="textBase">
-                New
+                {t.newTag}
               </AppText>
             </View>
           )}

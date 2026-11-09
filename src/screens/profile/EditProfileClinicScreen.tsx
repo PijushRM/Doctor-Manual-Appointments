@@ -17,6 +17,7 @@ export const EditProfileClinicScreen = () => {
   const vm = useEditProfileClinicViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const {t} = vm;
 
   return (
     <Screen>
@@ -24,9 +25,7 @@ export const EditProfileClinicScreen = () => {
         part={2}
         total={2}
         onBack={vm.back}
-        backLabel={
-          vm.fromSettings ? 'Back to settings' : 'Back to personal details'
-        }
+        backLabel={vm.fromSettings ? t.backToSettings : t.backToPersonal}
       />
       <ScrollView
         style={styles.flex}
@@ -34,14 +33,14 @@ export const EditProfileClinicScreen = () => {
         keyboardShouldPersistTaps="handled">
         <ProgressBar part={2} total={2} />
         <AppText variant="headline" accessibilityRole="header">
-          Contact &{' '}
+          {t.contactTitle}{' '}
           <AppText variant="headline" color="textLink">
-            clinic
+            {t.contactTitleAccent}
           </AppText>
         </AppText>
         <TextField
-          label="Email"
-          placeholder="e.g. clinic@gmail.com"
+          label={t.emailLabel}
+          placeholder={t.emailPlaceholder}
           value={vm.draft.email}
           onChangeText={vm.setText('email')}
           error={vm.errors.email}
@@ -50,9 +49,9 @@ export const EditProfileClinicScreen = () => {
           autoComplete="email"
         />
         <TextField
-          label="Phone"
-          placeholder="e.g. 98300 12345"
-          hint="IN PATIENT SMS"
+          label={t.phoneLabel}
+          placeholder={t.phonePlaceholder}
+          hint={t.phoneHint}
           value={vm.draft.phone}
           onChangeText={vm.setText('phone')}
           error={vm.errors.phone}
@@ -60,8 +59,8 @@ export const EditProfileClinicScreen = () => {
           autoComplete="tel"
         />
         <TextField
-          label="Clinic name"
-          placeholder="e.g. Smile Dental Clinic"
+          label={t.clinicName}
+          placeholder={t.clinicNamePlaceholder}
           // Keyboards "correct" names (Subhas → Subhash).
           autoCorrect={false}
           value={vm.draft.clinicName}
@@ -71,20 +70,20 @@ export const EditProfileClinicScreen = () => {
 
         <View>
           <View style={styles.row}>
-            {vm.times.map(t => (
-              <View key={t.key} style={styles.flex}>
+            {vm.times.map(time => (
+              <View key={time.key} style={styles.flex}>
                 <AppText variant="label" style={styles.timeLabel}>
-                  {t.label}
+                  {time.label}
                 </AppText>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${t.label}, ${t.value}. Change`}
-                  onPress={t.open}
+                  accessibilityLabel={t.changeTime(time.label, time.value)}
+                  onPress={time.open}
                   style={[
                     styles.timeField,
                     !!vm.errors.hours && styles.timeFieldError,
                   ]}>
-                  <AppText>{t.value}</AppText>
+                  <AppText>{time.value}</AppText>
                   <Icon name="clock" size={18} color={colors.textSubtle} />
                 </Pressable>
               </View>
@@ -99,7 +98,7 @@ export const EditProfileClinicScreen = () => {
 
         <View>
           <AppText variant="label" style={styles.timeLabel}>
-            Working days
+            {t.workingDays}
           </AppText>
           <View style={styles.days}>
             {vm.days.map(d => (
@@ -128,7 +127,7 @@ export const EditProfileClinicScreen = () => {
       </ScrollView>
       <BottomBar>
         <Button
-          title={vm.saving ? 'Saving…' : 'Save changes'}
+          title={vm.saving ? t.saving : t.saveChanges}
           onPress={vm.save}
           disabled={vm.saving}
         />

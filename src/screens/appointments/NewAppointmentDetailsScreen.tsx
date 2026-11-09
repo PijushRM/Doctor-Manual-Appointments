@@ -7,6 +7,8 @@ import {Screen} from 'src/components/shared/Screen';
 import {ProgressBar, StepHeader} from 'src/components/shared/StepHeader';
 import {TextField} from 'src/components/shared/TextField';
 import {useNewAppointmentDetailsViewModel} from 'src/hooks/useNewAppointmentDetailsViewModel';
+import {tr} from 'src/i18n';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import {styles} from './styles';
 
 // Artboard: doctor/DocAdd
@@ -15,6 +17,7 @@ export const NewAppointmentDetailsScreen = () => {
   const ageRef = useRef<TextInput>(null);
   const phoneRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
+  const t = tr(appointmentsText);
 
   return (
     <Screen>
@@ -22,7 +25,7 @@ export const NewAppointmentDetailsScreen = () => {
         part={1}
         total={2}
         onBack={vm.back}
-        backLabel="Back to my patients"
+        backLabel={t.backToPatients}
       />
       <ScrollView
         style={styles.flex}
@@ -31,23 +34,22 @@ export const NewAppointmentDetailsScreen = () => {
         <ProgressBar part={1} total={2} />
         <View>
           <AppText variant="headline" accessibilityRole="header">
-            New{' '}
+            {t.titleStart}{' '}
             <AppText variant="headline" color="textLink">
-              appointment
+              {t.titleAccent}
             </AppText>
           </AppText>
           <AppText variant="bodySmall" style={styles.intro}>
-            Start with the patient's details. You'll pick the date and time
-            next.
+            {t.intro}
           </AppText>
         </View>
 
         <AppText variant="heading" accessibilityRole="header">
-          Patient details
+          {t.patientDetails}
         </AppText>
         <TextField
-          label="Full name"
-          placeholder="e.g. Amit Das"
+          label={t.fullName}
+          placeholder={t.fullNamePlaceholder}
           // Keyboards "correct" names (Subhas → Subhash).
           autoCorrect={false}
           value={vm.draft.name}
@@ -63,8 +65,8 @@ export const NewAppointmentDetailsScreen = () => {
           <View style={styles.age}>
             <TextField
               ref={ageRef}
-              label="Age"
-              placeholder="e.g. 34"
+              label={t.age}
+              placeholder={t.agePlaceholder}
               value={vm.draft.age}
               onChangeText={vm.setField('age')}
               error={vm.errors.age}
@@ -78,8 +80,8 @@ export const NewAppointmentDetailsScreen = () => {
           <View style={styles.flex}>
             <TextField
               ref={phoneRef}
-              label="Phone number"
-              placeholder="e.g. 98300 12345"
+              label={t.phone}
+              placeholder={t.phonePlaceholder}
               value={vm.draft.phone}
               onChangeText={vm.setField('phone')}
               error={vm.errors.phone}
@@ -93,8 +95,8 @@ export const NewAppointmentDetailsScreen = () => {
         </View>
         <TextField
           ref={emailRef}
-          label="Email (optional)"
-          placeholder="e.g. amit@gmail.com"
+          label={t.email}
+          placeholder={t.emailPlaceholder}
           value={vm.draft.email}
           onChangeText={vm.setField('email')}
           error={vm.errors.email}
@@ -106,13 +108,12 @@ export const NewAppointmentDetailsScreen = () => {
         />
         {vm.existingName && (
           <AppText variant="caption" color="textLink">
-            Already a patient — this appointment will be added to{' '}
-            {vm.existingName}'s record.
+            {t.alreadyPatient(vm.existingName)}
           </AppText>
         )}
       </ScrollView>
       <BottomBar>
-        <Button title="Next: date & time" onPress={vm.next} />
+        <Button title={t.nextDateTime} onPress={vm.next} />
       </BottomBar>
     </Screen>
   );

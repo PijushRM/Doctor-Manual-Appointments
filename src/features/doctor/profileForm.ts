@@ -3,6 +3,8 @@ import {
   isValidPhone,
   tidy,
 } from 'src/features/patients/patientDraft';
+import {tr} from 'src/i18n';
+import {profileText} from 'src/i18n/strings/profile';
 import type {DoctorProfile} from 'src/types/clinic';
 
 // Edit Profile, part 1 and part 2.
@@ -15,18 +17,25 @@ export type ClinicDraft = Pick<
   'email' | 'phone' | 'clinicName' | 'opens' | 'closes' | 'workingDays'
 >;
 
-export const PROFILE_ERRORS = {
-  name: 'Enter your name.',
-  email: 'Enter a valid email or leave it blank.',
-  phone: 'Enter a valid phone number or leave it blank.',
-  hours: 'Closing time must be after opening time.',
-  days: 'Pick at least one working day.',
-};
-type ErrorKey = keyof typeof PROFILE_ERRORS;
+type ErrorKey = 'name' | 'email' | 'phone' | 'hours' | 'days';
 export type ProfileErrors = Partial<Record<ErrorKey, string>>;
 
-const only = (keys: ErrorKey[]): ProfileErrors =>
-  Object.fromEntries(keys.map(k => [k, PROFILE_ERRORS[k]]));
+// In the current language: read when the form is checked.
+export const profileErrors = (): Record<ErrorKey, string> => {
+  const t = tr(profileText);
+  return {
+    name: t.errName,
+    email: t.errEmail,
+    phone: t.errPhone,
+    hours: t.errHours,
+    days: t.errDays,
+  };
+};
+
+const only = (keys: ErrorKey[]): ProfileErrors => {
+  const messages = profileErrors();
+  return Object.fromEntries(keys.map(k => [k, messages[k]]));
+};
 
 export const parseDetails = (draft: DetailsDraft) => {
   const values = {

@@ -1,7 +1,9 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
-import {format} from 'date-fns';
 import {useNow} from 'src/hooks/useNow';
+import {tr} from 'src/i18n';
+import {formatDate} from 'src/i18n/format';
+import {homeText} from 'src/i18n/strings/home';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {AppText} from './AppText';
 
@@ -12,10 +14,10 @@ export const DoctorHeader = () => {
   return (
     <View style={styles.header}>
       <AppText variant="caption">
-        {format(now, 'EEE, d MMM yyyy').toUpperCase()}
+        {formatDate(now, 'EEE, d MMM yyyy').toUpperCase()}
       </AppText>
       <AppText variant="bodyStrong" style={styles.name}>
-        {name || 'Doctor'}
+        {name || tr(homeText).doctor}
       </AppText>
     </View>
   );

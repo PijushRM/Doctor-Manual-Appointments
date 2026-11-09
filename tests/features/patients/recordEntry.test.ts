@@ -7,6 +7,7 @@ import {
   photoName,
   saveLabel,
 } from 'src/features/patients/recordEntry';
+import {useLanguageStore} from 'src/i18n';
 import type {RecordEntry} from 'src/types/clinic';
 
 const file = {
@@ -63,5 +64,32 @@ describe('files', () => {
     expect(photoName('Amit Das', new Date(2025, 9, 24))).toBe(
       'Photo_AmitDas_24Oct.jpg',
     );
+  });
+});
+
+describe('in Bengali', () => {
+  it('labels uploads and sizes in Bengali', () => {
+    useLanguageStore.setState({language: 'bn'});
+    try {
+      expect(saveLabel('prescription')).toBe('প্রেসক্রিপশন আপলোড করুন');
+      expect(saveLabel('note')).toBe('নোট সেভ করুন');
+      expect(formatSize(240 * 1024)).toBe('২৪০ KB');
+      expect(formatSize(3.4 * 1024 * 1024)).toBe('৩.৪ MB');
+      expect(
+        addedMessage(
+          {
+            id: 'e1',
+            patientId: 'p1',
+            at: '',
+            docType: 'report',
+            file: null,
+            note: '',
+          },
+          'Amit Das',
+        ),
+      ).toBe('Amit-এর কার্যকলাপে রিপোর্ট যোগ হয়েছে');
+    } finally {
+      useLanguageStore.setState({language: 'en'});
+    }
   });
 });

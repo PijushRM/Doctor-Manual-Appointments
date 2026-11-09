@@ -14,6 +14,7 @@ import {makeStyles as makeProfileStyles} from './styles';
 // hidden until those pages exist.
 export const AboutScreen = () => {
   const vm = useAboutViewModel();
+  const {t} = vm;
   const {colors} = useTheme();
   const shared = useStyles(makeProfileStyles);
   const styles = useStyles(makeStyles);
@@ -22,8 +23,8 @@ export const AboutScreen = () => {
     <Screen>
       <BackHeader
         onBack={vm.back}
-        backLabel="Back to profile"
-        right={<AppText variant="caption">ABOUT THIS APP</AppText>}
+        backLabel={t.backToProfile}
+        right={<AppText variant="caption">{t.aboutHeader}</AppText>}
       />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.identity}>
@@ -41,7 +42,7 @@ export const AboutScreen = () => {
         </View>
 
         <AppText variant="heading" accessibilityRole="header">
-          Developed by
+          {t.developedBy}
         </AppText>
         <View style={shared.card}>
           {vm.developer.map((row, i) => (

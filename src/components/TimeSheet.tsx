@@ -4,6 +4,8 @@ import {AppText} from './shared/AppText';
 import {Button} from './shared/Button';
 import {Sheet} from './shared/Sheet';
 import {TimeWheel} from './TimeWheel';
+import {tr} from 'src/i18n';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 
 type Props = {
   title: string;
@@ -15,6 +17,7 @@ type Props = {
 // The New Appointment time wheel in a bottom sheet (Edit Profile's Opens / Closes).
 export const TimeSheet = ({title, minutes, onDone, onClose}: Props) => {
   const [value, setValue] = useState(minutes);
+  const t = tr(appointmentsText);
   return (
     <Sheet label={title} onClose={onClose}>
       <AppText
@@ -25,9 +28,9 @@ export const TimeSheet = ({title, minutes, onDone, onClose}: Props) => {
       </AppText>
       <TimeWheel minutes={value} onChange={setValue} />
       <AppText variant="caption" style={styles.hint}>
-        Scroll or tap a time
+        {t.scrollOrTapTime}
       </AppText>
-      <Button title="Done" onPress={() => onDone(value)} />
+      <Button title={t.done} onPress={() => onDone(value)} />
     </Sheet>
   );
 };

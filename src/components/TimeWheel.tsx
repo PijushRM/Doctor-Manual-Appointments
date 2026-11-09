@@ -7,11 +7,14 @@ import {
   type TimeParts,
 } from 'src/features/appointments/schedule';
 import {useStyles} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {localDigits} from 'src/i18n/format';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import {WHEEL_ROW_HEIGHT, WHEEL_VISIBLE_ROWS, WheelPicker} from './WheelPicker';
 
+// Wheel labels in the current language; the index of each row never changes.
 const HOURS = Array.from({length: 12}, (_, i) => String(i + 1)); // 1…12
 const MINUTES = Array.from({length: 60}, (_, i) => String(i).padStart(2, '0'));
-const MERIDIEMS = ['AM', 'PM'];
 
 type Props = {minutes: number; onChange: (minutes: number) => void};
 
@@ -22,27 +25,28 @@ export const TimeWheel = ({minutes, onChange}: Props) => {
   const parts = splitTime(minutes);
   const set = (next: Partial<TimeParts>) =>
     onChange(joinTime({...parts, ...next}));
+  const t = tr(appointmentsText);
 
   return (
     <View style={styles.wheel}>
       <View style={styles.band} pointerEvents="none" />
       <WheelPicker
-        label="Hour"
-        items={HOURS}
+        label={t.hour}
+        items={HOURS.map(localDigits)}
         index={parts.h12 - 1}
         onChange={i => set({h12: i + 1})}
         loop
       />
       <WheelPicker
-        label="Minute"
-        items={MINUTES}
+        label={t.minute}
+        items={MINUTES.map(localDigits)}
         index={parts.m}
         onChange={m => set({m})}
         loop
       />
       <WheelPicker
-        label="AM or PM"
-        items={MERIDIEMS}
+        label={t.amPm}
+        items={[t.am, t.pm]}
         index={parts.pm ? 1 : 0}
         onChange={i => set({pm: i === 1})}
       />

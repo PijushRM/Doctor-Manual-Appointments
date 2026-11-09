@@ -1,6 +1,15 @@
+import {useState} from 'react';
 import {Alert, Linking} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import type {StackNavigationProp} from '@react-navigation/stack';
+import {
+  LANGUAGES,
+  tr,
+  useLanguage,
+  useLanguageStore,
+  type Language,
+} from 'src/i18n';
+import {settingsText} from 'src/i18n/strings/settings';
 import type {ProfileStackParamList} from 'src/navigation/types';
 import {requestAlertPermission} from 'src/services/notificationService';
 import {useAuthStore} from 'src/store/useAuthStore';
@@ -13,6 +22,10 @@ export const useSettingsViewModel = () => {
   const alerts = useDoctorStore(s => s.alerts);
   const setAlerts = useDoctorStore(s => s.setAlerts);
   const logOut = useAuthStore(s => s.logOut);
+  const language = useLanguage();
+  const setLanguage = useLanguageStore(s => s.setLanguage);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const t = tr(settingsText);
 
   const toggleAlerts = async () => {
     if (alerts) {
@@ -24,19 +37,15 @@ export const useSettingsViewModel = () => {
       return;
     }
     Alert.alert(
-      'Notifications are off',
-      'Allow notifications for Smile Doctor in Settings to get a reminder 15 minutes before each appointment.',
+      t.notificationsOffTitle,
+      t.notificationsOffBody,
       [
-        {text: 'Not now', style: 'cancel'},
+        {text: t.notNow, style: 'cancel'},
         {
-          text: 'Open Settings',
+          text: t.openSettings,
           onPress: () => {
             Linking.openSettings().catch(e =>
-              showError(
-                'Couldn’t open Settings',
-                e,
-                'Open Settings › Apps › Smile Doctor on your phone.',
-              ),
+              showError(t.openSettingsFailed, e, t.openSettingsFallback),
             );
           },
         },
@@ -46,23 +55,35 @@ export const useSettingsViewModel = () => {
   };
 
   return {
+    t,
     alerts,
     toggleAlerts: () => {
-      toggleAlerts().catch(e =>
-        showError('Couldn’t change appointment alerts', e),
-      );
+      toggleAlerts().catch(e => showError(t.alertsFailed, e));
     },
+    languageName: LANGUAGES.find(l => l.key === language)!.name,
+    languageOpen,
+    openLanguage: () => setLanguageOpen(true),
+    closeLanguage: () => setLanguageOpen(false),
+    languages: LANGUAGES.map(l => ({
+      ...l,
+      selected: l.key === language,
+      pick: () => {
+        setLanguageOpen(false);
+        // The whole app redraws in the new language, staying on this screen.
+        setLanguage(l.key as Language);
+      },
+    })),
     // Clinic hours and working days live on Edit Profile, part 2.
     openAvailability: () => navigation.navigate('EditProfileClinic'),
     changePassword: () => navigation.navigate('ChangePassword'),
     back: navigation.goBack,
     logOut: () =>
       Alert.alert(
-        'Log out?',
-        'Your patients and appointments are saved to your account. You’ll need your password to log back in.',
+        t.logOutTitle,
+        t.logOutBody,
         [
-          {text: 'Cancel', style: 'cancel'},
-          {text: 'Log out', style: 'destructive', onPress: logOut},
+          {text: t.cancel, style: 'cancel'},
+          {text: t.logOut, style: 'destructive', onPress: logOut},
         ],
         {cancelable: true},
       ),

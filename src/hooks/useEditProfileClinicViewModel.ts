@@ -15,20 +15,14 @@ import type {ProfileStackParamList} from 'src/navigation/types';
 import {toUpload} from 'src/services/fileService';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {showError} from 'src/utils/showError';
+import {tr} from 'src/i18n';
+import {commonText} from 'src/i18n/strings/common';
+import {profileText} from 'src/i18n/strings/profile';
 
 // Shown Monday first; stored Sunday first (Date#getDay order).
-const DAYS = [
-  {index: 1, letter: 'M', name: 'Monday'},
-  {index: 2, letter: 'T', name: 'Tuesday'},
-  {index: 3, letter: 'W', name: 'Wednesday'},
-  {index: 4, letter: 'T', name: 'Thursday'},
-  {index: 5, letter: 'F', name: 'Friday'},
-  {index: 6, letter: 'S', name: 'Saturday'},
-  {index: 0, letter: 'S', name: 'Sunday'},
-];
+const MONDAY_FIRST = [1, 2, 3, 4, 5, 6, 0];
 
 type TimeKey = 'opens' | 'closes';
-const TIME_TITLES: Record<TimeKey, string> = {opens: 'Opens', closes: 'Closes'};
 
 export const useEditProfileClinicViewModel = () => {
   const navigation =
@@ -52,6 +46,12 @@ export const useEditProfileClinicViewModel = () => {
   const [errors, setErrors] = useState<ProfileErrors>({});
   const [editingTime, setEditingTime] = useState<TimeKey | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = tr(profileText);
+  const week = tr(commonText);
+  const TIME_TITLES: Record<TimeKey, string> = {
+    opens: t.opens,
+    closes: t.closes,
+  };
 
   const change = (changes: Partial<ClinicDraft>) => {
     setDraft(d => ({...d, ...changes}));
@@ -78,13 +78,14 @@ export const useEditProfileClinicViewModel = () => {
         navigation.goBack();
       }
     } catch (e) {
-      showError('Couldn’t save your profile', e);
+      showError(t.saveFailed, e);
     } finally {
       setSaving(false);
     }
   };
 
   return {
+    t,
     fromSettings: !details,
     draft,
     errors,
@@ -105,13 +106,15 @@ export const useEditProfileClinicViewModel = () => {
       },
       close: () => setEditingTime(null),
     },
-    days: DAYS.map(d => ({
-      ...d,
-      on: draft.workingDays[d.index],
+    days: MONDAY_FIRST.map(index => ({
+      index,
+      letter: week.weekdaysLetter[index],
+      name: week.weekdaysLong[index],
+      on: draft.workingDays[index],
       toggle: () =>
         change({
           workingDays: draft.workingDays.map((on, i) =>
-            i === d.index ? !on : on,
+            i === index ? !on : on,
           ),
         }),
     })),

@@ -53,6 +53,23 @@ describe('patientEvents', () => {
     ]);
   });
 
+  it('offers SMS only on bookings whose visit is still ahead', () => {
+    const events = patientEvents(
+      amit,
+      [
+        appt('first', iso(10, 11, 30), iso(1)), // visit already happened
+        appt('next', iso(27, 9, 30), iso(24, 9, 15)), // still ahead
+      ],
+      [],
+      now,
+    );
+    expect(events.map(e => [e.kind, e.appointmentId])).toEqual([
+      ['booked', 'next'],
+      ['visit', undefined],
+      ['added', undefined],
+    ]);
+  });
+
   it('falls back to "Added by you" for a patient with no bookings', () => {
     expect(patientEvents(amit, [], [], now).map(e => e.title)).toEqual([
       'Added by you',

@@ -6,9 +6,12 @@ import {
   startOfDay,
   startOfMonth,
 } from 'date-fns';
+import {tr} from 'src/i18n';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import type {Appointment} from 'src/types/clinic';
 
-export const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Sunday first
+// Sunday first, in the current language.
+export const weekdayInitials = () => tr(appointmentsText).weekdayInitials;
 
 export const dayKey = (date: Date) => format(date, 'yyyy-MM-dd');
 

@@ -11,6 +11,8 @@ import {ProgressBar, StepHeader} from 'src/components/shared/StepHeader';
 import {useNewAppointmentDateTimeViewModel} from 'src/hooks/useNewAppointmentDateTimeViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
 import {tick} from 'src/services/feedback';
+import {tr} from 'src/i18n';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 import {DATE_CHIP_STEP, makeStyles} from './dateTimeStyles';
 
 // Artboards: doctor/DocAdd2 (scroll wheel = Option A), DocAdd2Cal (calendar open).
@@ -18,6 +20,7 @@ export const NewAppointmentDateTimeScreen = () => {
   const vm = useNewAppointmentDateTimeViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const t = tr(appointmentsText);
   const datesRef = useRef<FlatList<(typeof vm.dates)[number]>>(null);
   const selectedDate = vm.dates.findIndex(d => d.selected);
 
@@ -41,7 +44,7 @@ export const NewAppointmentDateTimeScreen = () => {
         part={2}
         total={2}
         onBack={vm.back}
-        backLabel="Back to patient details"
+        backLabel={t.backToDetails}
       />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         <ProgressBar part={2} total={2} />
@@ -49,19 +52,19 @@ export const NewAppointmentDateTimeScreen = () => {
           variant="headline"
           accessibilityRole="header"
           style={styles.title}>
-          Date &{' '}
+          {t.dateTitleStart}{' '}
           <AppText variant="headline" color="textLink">
-            time
+            {t.dateTitleAccent}
           </AppText>
         </AppText>
 
         <View style={styles.sectionRow}>
           <AppText variant="heading" accessibilityRole="header">
-            Date
+            {t.date}
           </AppText>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Open calendar, ${vm.monthLabel}`}
+            accessibilityLabel={t.openCalendar(vm.monthLabel)}
             onPress={vm.openCalendar}
             style={styles.month}>
             <AppText variant="label">{vm.monthLabel}</AppText>
@@ -109,20 +112,20 @@ export const NewAppointmentDateTimeScreen = () => {
 
         <View style={styles.sectionRow}>
           <AppText variant="heading" accessibilityRole="header">
-            Time
+            {t.time}
           </AppText>
-          <AppText variant="caption">SCROLL OR TAP</AppText>
+          <AppText variant="caption">{t.scrollOrTap}</AppText>
         </View>
         <TimeWheel minutes={vm.minutes} onChange={vm.setMinutes} />
 
         {vm.quickPicks.length > 0 && (
           <View style={styles.quick}>
-            <AppText variant="caption">Free soon:</AppText>
+            <AppText variant="caption">{t.freeSoon}</AppText>
             {vm.quickPicks.map(q => (
               <Pressable
                 key={q.label}
                 accessibilityRole="button"
-                accessibilityLabel={`Set time to ${q.label}`}
+                accessibilityLabel={t.setTimeTo(q.label)}
                 onPress={q.pick}
                 style={styles.chip}>
                 <AppText variant="label">{q.label}</AppText>
@@ -143,7 +146,7 @@ export const NewAppointmentDateTimeScreen = () => {
           {vm.summary}
         </AppText>
         <Button
-          title={vm.saving ? 'Saving…' : 'Save appointment'}
+          title={vm.saving ? t.saving : t.saveAppointment}
           onPress={vm.save}
           disabled={vm.saving}
         />

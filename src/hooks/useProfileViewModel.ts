@@ -8,6 +8,9 @@ import type {ProfileStackParamList} from 'src/navigation/types';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {profilePhotoSource} from 'src/features/doctor/photo';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {tr} from 'src/i18n';
+import {localDigits} from 'src/i18n/format';
+import {profileText} from 'src/i18n/strings/profile';
 import {useNow} from './useNow';
 
 export const useProfileViewModel = () => {
@@ -17,10 +20,12 @@ export const useProfileViewModel = () => {
   const patientCount = useClinicStore(s => s.patients.length);
   const appointments = useClinicStore(s => s.appointments);
   const now = useNow();
+  const t = tr(profileText);
 
-  const name = profile.name || 'Doctor';
+  const name = profile.name || t.doctorFallback;
 
   return {
+    t,
     photo: profilePhotoSource(profile),
     initials: doctorInitials(name),
     ...splitSurname(name),
@@ -29,20 +34,20 @@ export const useProfileViewModel = () => {
       .join(' · '),
     clinicName: profile.clinicName,
     stats: [
-      {label: 'PATIENTS', value: patientCount},
-      {label: 'TODAY', value: countByTab(appointments, now).today},
-      {label: 'THIS WEEK', value: countThisWeek(appointments, now)},
+      {label: t.statPatients, value: patientCount},
+      {label: t.statToday, value: countByTab(appointments, now).today},
+      {label: t.statThisWeek, value: countThisWeek(appointments, now)},
     ],
     contact: [
-      {icon: 'mail' as const, label: 'EMAIL', value: profile.email},
-      {icon: 'phone' as const, label: 'PHONE', value: profile.phone},
+      {icon: 'mail' as const, label: t.email, value: profile.email},
+      {icon: 'phone' as const, label: t.phone, value: profile.phone},
       {
         icon: 'clock' as const,
-        label: 'CLINIC HOURS',
+        label: t.clinicHours,
         value: formatClinicHours(profile),
       },
     ],
-    version: `v${APP_VERSION}`,
+    version: `v${localDigits(APP_VERSION)}`,
     editProfile: () => navigation.navigate('EditProfileDetails'),
     openSettings: () => navigation.navigate('Settings'),
     openAbout: () => navigation.navigate('About'),

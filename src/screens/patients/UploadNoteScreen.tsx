@@ -19,12 +19,13 @@ export const UploadNoteScreen = () => {
   if (!vm) {
     return null;
   }
+  const {t} = vm;
 
   return (
     <Screen>
       <BackHeader
         onBack={vm.back}
-        backLabel="Back to patient profile"
+        backLabel={t.backToProfile}
         right={
           <View style={styles.who}>
             <View style={styles.whoAvatar}>
@@ -45,28 +46,28 @@ export const UploadNoteScreen = () => {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         <AppText variant="headline" accessibilityRole="header">
-          Add to{' '}
+          {t.addTo}
           <AppText variant="headline" color="textLink">
-            record
+            {t.record}
           </AppText>
         </AppText>
 
         <View>
           <AppText variant="caption" style={styles.typeLabel}>
-            TYPE
+            {t.type}
           </AppText>
           <View style={styles.chips} accessibilityRole="radiogroup">
-            {vm.types.map(t => (
+            {vm.types.map(type => (
               <Pressable
-                key={t.key}
+                key={type.key}
                 accessibilityRole="radio"
-                accessibilityState={{selected: t.selected}}
-                onPress={t.pick}
-                style={[styles.chip, t.selected && styles.chipOn]}>
+                accessibilityState={{selected: type.selected}}
+                onPress={type.pick}
+                style={[styles.chip, type.selected && styles.chipOn]}>
                 <AppText
                   variant="label"
-                  color={t.selected ? 'textInverse' : 'textBase'}>
-                  {t.label}
+                  color={type.selected ? 'textInverse' : 'textBase'}>
+                  {type.label}
                 </AppText>
               </Pressable>
             ))}
@@ -92,7 +93,7 @@ export const UploadNoteScreen = () => {
               </View>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Remove file"
+                accessibilityLabel={t.removeFile}
                 onPress={vm.removeFile}
                 style={styles.remove}>
                 <Icon name="close" size={20} color={colors.textSubtle} />
@@ -101,9 +102,7 @@ export const UploadNoteScreen = () => {
           ) : (
             <View>
               <View style={[styles.drop, !!vm.fileError && styles.dropError]}>
-                <AppText variant="caption">
-                  Add a photo or file (PDF, JPG, PNG)
-                </AppText>
+                <AppText variant="caption">{t.dropHint}</AppText>
                 <View style={styles.pickers}>
                   <Pressable
                     accessibilityRole="button"
@@ -111,7 +110,7 @@ export const UploadNoteScreen = () => {
                     style={styles.pick}>
                     <Icon name="camera" size={18} color={colors.textBrand} />
                     <AppText variant="label" color="textBrand">
-                      Camera
+                      {t.camera}
                     </AppText>
                   </Pressable>
                   <Pressable
@@ -120,7 +119,7 @@ export const UploadNoteScreen = () => {
                     style={styles.pick}>
                     <Icon name="file" size={18} color={colors.textBrand} />
                     <AppText variant="label" color="textBrand">
-                      Choose file
+                      {t.chooseFile}
                     </AppText>
                   </Pressable>
                 </View>
@@ -138,20 +137,20 @@ export const UploadNoteScreen = () => {
           ))}
 
         <TextField
-          label="Note"
+          label={t.note}
           hint={vm.noteHint}
           value={vm.note}
           onChangeText={vm.setNote}
           error={vm.noteError}
           multiline
-          placeholder="e.g. Amoxicillin 500 mg, 3× a day for 5 days. Take after food."
+          placeholder={t.notePlaceholder}
         />
         <AppText variant="caption">{vm.footnote}</AppText>
       </ScrollView>
 
       <BottomBar>
         <Button
-          title={vm.saving ? 'Saving…' : vm.saveLabel}
+          title={vm.saving ? t.saving : vm.saveLabel}
           onPress={vm.save}
           disabled={vm.saving}
         />

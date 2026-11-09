@@ -1,5 +1,8 @@
-import {differenceInCalendarDays, format, isSameYear} from 'date-fns';
+import {differenceInCalendarDays, isSameYear} from 'date-fns';
 import {formatTime, minutesOfDay} from 'src/features/appointments/schedule';
+import {tr} from 'src/i18n';
+import {formatDate} from 'src/i18n/format';
+import {patientsText} from 'src/i18n/strings/patients';
 import type {
   Appointment,
   DocType,
@@ -22,14 +25,19 @@ export type ActivityEvent = {
   note?: string; // shown in a box under the event
   file?: StoredFile; // tap to open
   docType?: DocType;
+  // A booking whose visit is still ahead: its row offers "Send SMS", in case
+  // the patient wasn't told when it was booked.
+  appointmentId?: string;
 };
 
-const appointmentDay = (date: Date) => format(date, 'EEE, d MMM');
+const appointmentDay = (date: Date) => formatDate(date, 'EEE, d MMM');
 export const appointmentDayTime = (date: Date) =>
   `${appointmentDay(date)} · ${formatTime(minutesOfDay(date))}`;
 
 const entryEvent = (entry: RecordEntry): ActivityEvent => {
-  const title = entry.docType ? uploadTitle(entry.docType) : 'Note added';
+  const title = entry.docType
+    ? uploadTitle(entry.docType)
+    : tr(patientsText).noteAdded;
   return {
     key: entry.id,
     kind: entry.docType ? 'upload' : 'note',
@@ -56,28 +64,30 @@ export const patientEvents = (
   entries: RecordEntry[],
   now: Date,
 ): ActivityEvent[] => {
+  const t = tr(patientsText);
   const events: ActivityEvent[] = entries.map(entryEvent);
   let addedWithBooking = false;
   for (const a of appointments) {
     const startsAt = new Date(a.startsAt);
     const isFirst = a.createdAt === patient.createdAt;
     addedWithBooking ||= isFirst;
-    const title = isFirst ? 'Added by you' : 'Appointment booked';
+    const title = isFirst ? t.addedByYou : t.appointmentBooked;
     events.push({
       key: `${a.id}-booked`,
       kind: isFirst ? 'added' : 'booked',
       at: new Date(a.createdAt),
       title,
       summary: `${title} · ${appointmentDay(startsAt)}`,
-      detail: `${isFirst ? 'Booked for ' : ''}${appointmentDayTime(startsAt)}`,
+      detail: `${isFirst ? t.bookedFor : ''}${appointmentDayTime(startsAt)}`,
+      appointmentId: startsAt > now ? a.id : undefined,
     });
     if (startsAt <= now) {
       events.push({
         key: `${a.id}-visit`,
         kind: 'visit',
         at: startsAt,
-        title: 'Visit',
-        summary: 'Visit',
+        title: t.visit,
+        summary: t.visit,
       });
     }
   }
@@ -86,8 +96,8 @@ export const patientEvents = (
       key: `${patient.id}-added`,
       kind: 'added',
       at: new Date(patient.createdAt),
-      title: 'Added by you',
-      summary: 'Added by you',
+      title: t.addedByYou,
+      summary: t.addedByYou,
     });
   }
   return events.sort((x, y) => y.at.getTime() - x.at.getTime());
@@ -100,9 +110,9 @@ export const formatWhen = (at: Date, now: Date) => {
     return formatTime(minutesOfDay(at));
   }
   if (daysAgo === 1) {
-    return 'Yesterday';
+    return tr(patientsText).yesterday;
   }
-  return format(at, isSameYear(at, now) ? 'd MMM' : 'd MMM yyyy');
+  return formatDate(at, isSameYear(at, now) ? 'd MMM' : 'd MMM yyyy');
 };
 
 // Name contains the text, or the phone contains the digits typed.

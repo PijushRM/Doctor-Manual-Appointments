@@ -11,6 +11,8 @@ import {
   type Channel,
 } from 'src/hooks/useAppointmentSavedViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {appointmentsText} from 'src/i18n/strings/appointments';
 
 const CHANNEL_ICON: Record<Channel, IconName> = {
   sms: 'sms',
@@ -23,6 +25,7 @@ export const AppointmentSavedScreen = () => {
   const vm = useAppointmentSavedViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const t = tr(appointmentsText);
   if (!vm) {
     return null;
   }
@@ -43,14 +46,12 @@ export const AppointmentSavedScreen = () => {
             variant="headline"
             accessibilityRole="header"
             style={styles.title}>
-            Appointment{' '}
+            {t.savedTitleStart}{' '}
             <AppText variant="headline" color="textLink">
-              added
+              {t.savedTitleAccent}
             </AppText>
           </AppText>
-          <AppText variant="bodySmall">
-            {vm.patientName} is now on your patient list.
-          </AppText>
+          <AppText variant="bodySmall">{t.onYourList(vm.patientName)}</AppText>
         </View>
 
         <View style={styles.card}>
@@ -79,7 +80,7 @@ export const AppointmentSavedScreen = () => {
         </View>
 
         <View style={styles.send}>
-          <AppText variant="caption">SEND DETAILS TO PATIENT</AppText>
+          <AppText variant="caption">{t.sendToPatient}</AppText>
           <View style={styles.channels}>
             {vm.channels.map(c => {
               const sent = c.status === 'sent';
@@ -90,10 +91,10 @@ export const AppointmentSavedScreen = () => {
                   accessibilityRole="button"
                   accessibilityLabel={
                     off
-                      ? `${c.label}: not available`
+                      ? t.channelOff(c.label)
                       : sent
-                      ? `${c.label}: sent`
-                      : `Send by ${c.label}`
+                      ? t.channelSent(c.label)
+                      : t.sendBy(c.label)
                   }
                   accessibilityState={{
                     busy: c.status === 'sending',
@@ -126,9 +127,9 @@ export const AppointmentSavedScreen = () => {
         </View>
 
         <View style={styles.actions}>
-          <Button title="View my patients" onPress={vm.viewPatients} />
+          <Button title={t.viewPatients} onPress={vm.viewPatients} />
           <Button
-            title="Add another appointment"
+            title={t.addAnother}
             variant="outline"
             onPress={vm.addAnother}
           />

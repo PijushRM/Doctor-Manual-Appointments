@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, ScrollView, View} from 'react-native';
+import {ActivityIndicator, Pressable, ScrollView, View} from 'react-native';
 import {AppText} from 'src/components/shared/AppText';
 import {BackHeader} from 'src/components/shared/BackHeader';
 import {Icon, type IconName} from 'src/components/shared/Icon';
@@ -30,6 +30,7 @@ export const PatientProfileScreen = () => {
   if (!vm) {
     return null;
   }
+  const {t} = vm;
 
   const info: {icon: IconName; text: React.ReactNode}[] = [
     {icon: 'phone', text: vm.phone},
@@ -38,7 +39,8 @@ export const PatientProfileScreen = () => {
       icon: 'calendar',
       text: (
         <>
-          Next visit: <AppText variant="label">{vm.nextVisit}</AppText>
+          {t.nextVisit}
+          <AppText variant="label">{vm.nextVisit}</AppText>
         </>
       ),
     },
@@ -48,8 +50,8 @@ export const PatientProfileScreen = () => {
     <Screen>
       <BackHeader
         onBack={vm.back}
-        backLabel="Back to patients"
-        right={<AppText variant="caption">PATIENT PROFILE</AppText>}
+        backLabel={t.backToPatients}
+        right={<AppText variant="caption">{t.profileTag}</AppText>}
       />
 
       <View style={styles.body}>
@@ -102,7 +104,7 @@ export const PatientProfileScreen = () => {
               variant="button"
               color="textInverse"
               style={styles.actionText}>
-              Upload
+              {t.upload}
             </AppText>
           </Pressable>
           <Pressable
@@ -118,7 +120,7 @@ export const PatientProfileScreen = () => {
               variant="button"
               color="textBrand"
               style={styles.actionText}>
-              Add note
+              {t.addNote}
             </AppText>
           </Pressable>
         </View>
@@ -139,9 +141,9 @@ export const PatientProfileScreen = () => {
 
         <View style={styles.activityHeader}>
           <AppText variant="heading" accessibilityRole="header">
-            Activity
+            {t.activity}
           </AppText>
-          <AppText variant="caption">NEWEST FIRST</AppText>
+          <AppText variant="caption">{t.newestFirst}</AppText>
         </View>
         <ScrollView style={styles.timeline}>
           {vm.events.map((event, i) => {
@@ -153,12 +155,24 @@ export const PatientProfileScreen = () => {
                 disabled={!file}
                 onPress={file && (() => vm.open(file))}
                 accessibilityRole={file ? 'button' : undefined}
-                accessibilityHint={file ? 'Opens the file' : undefined}
+                accessibilityHint={file ? t.opensFile : undefined}
+                // Screen readers treat the row as one item, so its SMS
+                // button is offered as an action on the row.
+                accessibilityActions={
+                  event.sms && event.sms.status !== 'sending'
+                    ? [{name: 'sendSms', label: t.sendSmsAction}]
+                    : undefined
+                }
+                onAccessibilityAction={e => {
+                  if (e.nativeEvent.actionName === 'sendSms') {
+                    event.sms?.send();
+                  }
+                }}
                 accessibilityLabel={[
                   event.title,
-                  event.isNew && 'new',
+                  event.isNew && t.newA11y,
                   event.detail,
-                  event.note && `Note: ${event.note}`,
+                  event.note && `${t.notePrefix}${event.note}`,
                   event.when,
                 ]
                   .filter(Boolean)
@@ -192,7 +206,7 @@ export const PatientProfileScreen = () => {
                             variant="caption"
                             color="textBase"
                             style={styles.newTagText}>
-                            New
+                            {t.newTag}
                           </AppText>
                         </View>
                       )}
@@ -210,11 +224,42 @@ export const PatientProfileScreen = () => {
                   {event.note && (
                     <View style={styles.note}>
                       <AppText variant="bodySmall" style={styles.noteText}>
-                        Note: {event.note}
+                        {t.notePrefix}
+                        {event.note}
                       </AppText>
                     </View>
                   )}
                 </View>
+                {event.sms && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      event.sms.status === 'sent'
+                        ? t.smsSent
+                        : t.sendSmsTo(vm.firstName)
+                    }
+                    accessibilityState={{busy: event.sms.status === 'sending'}}
+                    disabled={event.sms.status === 'sending'}
+                    onPress={event.sms.send}
+                    hitSlop={6}
+                    style={({pressed}) => [
+                      styles.smsButton,
+                      event.sms?.status === 'sent' && styles.smsButtonSent,
+                      event.sms?.status === 'sending' && styles.smsButtonBusy,
+                      pressed && styles.eventPressed,
+                    ]}>
+                    {event.sms.status === 'sending' ? (
+                      <ActivityIndicator size="small" color={colors.textLink} />
+                    ) : (
+                      <Icon
+                        name={event.sms.status === 'sent' ? 'check' : 'sms'}
+                        size={18}
+                        strokeWidth={event.sms.status === 'sent' ? 2.2 : 1.5}
+                        color={colors.textLink}
+                      />
+                    )}
+                  </Pressable>
+                )}
               </Pressable>
             );
           })}

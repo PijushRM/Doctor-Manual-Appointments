@@ -2,6 +2,8 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {AppText} from './AppText';
 import {Button} from './Button';
+import {tr} from 'src/i18n';
+import {errorText} from 'src/i18n/strings/errors';
 import {Screen} from './Screen';
 
 type Props = {children: React.ReactNode};
@@ -29,22 +31,24 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 }
 
-const CrashScreen = ({onRetry}: {onRetry: () => void}) => (
-  <Screen edges={['top', 'bottom']}>
-    <View style={styles.center}>
-      <AppText variant="heading" style={styles.text}>
-        Something went wrong
-      </AppText>
-      <AppText color="textSubtle" style={styles.text}>
-        This screen ran into a problem. Your patients and appointments are safe
-        on the server.
-      </AppText>
-    </View>
-    <View style={styles.actions}>
-      <Button title="Try again" onPress={onRetry} />
-    </View>
-  </Screen>
-);
+const CrashScreen = ({onRetry}: {onRetry: () => void}) => {
+  const t = tr(errorText);
+  return (
+    <Screen edges={['top', 'bottom']}>
+      <View style={styles.center}>
+        <AppText variant="heading" style={styles.text}>
+          {t.crashTitle}
+        </AppText>
+        <AppText color="textSubtle" style={styles.text}>
+          {t.crashScreenBody}
+        </AppText>
+      </View>
+      <View style={styles.actions}>
+        <Button title={t.tryAgain} onPress={onRetry} />
+      </View>
+    </Screen>
+  );
+};
 
 const styles = StyleSheet.create({
   center: {

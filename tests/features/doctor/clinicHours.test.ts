@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'bun:test';
+import {useLanguageStore} from 'src/i18n';
 import {
   formatClinicHours,
   formatWorkingDays,
@@ -31,5 +32,24 @@ describe('formatClinicHours', () => {
         closes: 1080,
       }),
     ).toBe('Mon–Sat · 9:00 AM – 6:00 PM');
+  });
+});
+
+describe('in Bengali', () => {
+  it('uses Bengali day names, digits and parts of the day', () => {
+    useLanguageStore.setState({language: 'bn'});
+    try {
+      expect(formatWorkingDays(days(1, 2, 3, 4, 5, 6))).toBe('সোম–শনি');
+      expect(formatWorkingDays(days(0, 1, 2, 3, 4, 5, 6))).toBe('প্রতিদিন');
+      expect(
+        formatClinicHours({
+          workingDays: days(1, 2, 3, 4, 5, 6),
+          opens: 540,
+          closes: 1080,
+        }),
+      ).toBe('সোম–শনি · সকাল ৯:০০ – সন্ধ্যা ৬:০০');
+    } finally {
+      useLanguageStore.setState({language: 'en'});
+    }
   });
 });

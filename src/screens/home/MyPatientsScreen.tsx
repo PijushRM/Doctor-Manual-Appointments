@@ -15,6 +15,7 @@ export const MyPatientsScreen = () => {
   const vm = useMyPatientsViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const {t} = vm;
 
   return (
     <Screen>
@@ -22,15 +23,15 @@ export const MyPatientsScreen = () => {
 
       <View style={styles.body}>
         <AppText variant="headline" accessibilityRole="header">
-          My{' '}
+          {t.titleStart}
           <AppText variant="headline" color="textLink">
-            patients
+            {t.titleAccent}
           </AppText>
         </AppText>
 
         <View style={styles.stats}>
-          <StatCard label="UNDER YOUR CARE" value={vm.totalPatients} />
-          <StatCard label="TODAY" value={vm.todayCount} />
+          <StatCard label={t.underYourCare} value={vm.totalPatients} />
+          <StatCard label={t.today} value={vm.todayCount} />
         </View>
 
         <View style={styles.tabs} accessibilityRole="tablist">
@@ -91,7 +92,7 @@ export const MyPatientsScreen = () => {
             color={colors.textInverse}
           />
           <AppText variant="button" color="textInverse">
-            Add appointment
+            {t.addAppointment}
           </AppText>
         </Pressable>
       )}

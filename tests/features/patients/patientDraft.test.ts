@@ -4,6 +4,7 @@ import {
   findExistingPatient,
   parsePatientDraft,
 } from 'src/features/patients/patientDraft';
+import {useLanguageStore} from 'src/i18n';
 import type {Patient} from 'src/types/clinic';
 
 const valid = {
@@ -55,6 +56,19 @@ describe('parsePatientDraft', () => {
     expect(phoneError('983001234')).toBeDefined();
     expect(phoneError('98300abc45')).toBeDefined();
     expect(phoneError('+91 98300 12345 678')).toBeDefined();
+  });
+});
+
+describe('parsePatientDraft in Bengali', () => {
+  it('explains problems in Bengali', () => {
+    useLanguageStore.setState({language: 'bn'});
+    try {
+      const {errors} = parsePatientDraft(EMPTY_DRAFT);
+      expect(errors.name).toBe('রোগীর পুরো নাম লিখুন।');
+      expect(errors.age).toBe('বয়স ০–১২০');
+    } finally {
+      useLanguageStore.setState({language: 'en'});
+    }
   });
 });
 

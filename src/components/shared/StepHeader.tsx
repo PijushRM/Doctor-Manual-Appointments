@@ -2,6 +2,9 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import type {Theme} from 'src/configs/theme';
 import {useStyles} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {localDigits} from 'src/i18n/format';
+import {commonText} from 'src/i18n/strings/common';
 import {AppText} from './AppText';
 import {BackHeader} from './BackHeader';
 
@@ -19,7 +22,7 @@ export const StepHeader = ({
     backLabel={backLabel}
     right={
       <AppText variant="caption">
-        Part {part} of {total}
+        {tr(commonText).partOf(localDigits(part), localDigits(total))}
       </AppText>
     }
   />

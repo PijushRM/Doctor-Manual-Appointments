@@ -1,14 +1,16 @@
 import {beforeEach, describe, expect, it} from 'bun:test';
 import {ApiError, api, messageFor} from 'src/services/api';
 import {useAuthStore} from 'src/store/useAuthStore';
-import {
-  OFFLINE_MESSAGE,
-  SERVER_MESSAGE,
-  TIMEOUT_MESSAGE,
-  UNAVAILABLE_MESSAGE,
-  UNEXPECTED_MESSAGE,
-  errorMessage,
-} from 'src/utils/errors';
+import {errorText} from 'src/i18n/strings/errors';
+import {errorMessage} from 'src/utils/errors';
+
+const {
+  offline: OFFLINE_MESSAGE,
+  server: SERVER_MESSAGE,
+  timeout: TIMEOUT_MESSAGE,
+  unavailable: UNAVAILABLE_MESSAGE,
+  unexpected: UNEXPECTED_MESSAGE,
+} = errorText.en;
 import {fakeServer} from '../setup/fakeServer';
 
 beforeEach(() => {

@@ -15,6 +15,7 @@ export const ProfileScreen = () => {
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
   const [viewingPhoto, setViewingPhoto] = useState(false);
+  const {t} = vm;
 
   const linkRows: {
     icon: IconName;
@@ -22,10 +23,10 @@ export const ProfileScreen = () => {
     extra?: string;
     onPress: () => void;
   }[] = [
-    {icon: 'gear', label: 'Settings & log out', onPress: vm.openSettings},
+    {icon: 'gear', label: t.settingsAndLogOut, onPress: vm.openSettings},
     {
       icon: 'info',
-      label: 'About this app',
+      label: t.aboutThisApp,
       extra: vm.version,
       onPress: vm.openAbout,
     },
@@ -34,7 +35,7 @@ export const ProfileScreen = () => {
   return (
     <Screen>
       <AppText style={styles.title} accessibilityRole="header">
-        Profile
+        {t.title}
       </AppText>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.identity}>
@@ -42,9 +43,7 @@ export const ProfileScreen = () => {
             {/* Tap the photo to see it full size; the pencil edits. */}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={
-                vm.photo ? 'View profile photo' : 'Edit profile'
-              }
+              accessibilityLabel={vm.photo ? t.viewPhoto : t.editProfile}
               onPress={vm.photo ? () => setViewingPhoto(true) : vm.editProfile}>
               {vm.photo ? (
                 <Image source={vm.photo} style={styles.photo} />
@@ -58,7 +57,7 @@ export const ProfileScreen = () => {
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Edit profile"
+              accessibilityLabel={t.editProfile}
               hitSlop={8}
               onPress={vm.editProfile}
               style={styles.badge}>
@@ -95,14 +94,16 @@ export const ProfileScreen = () => {
         </View>
 
         <AppText variant="heading" accessibilityRole="header">
-          Contact & clinic
+          {t.contactAndClinic}
         </AppText>
         <View style={styles.card}>
           {vm.contact.map((row, i) => (
             <View
               key={row.label}
               accessible
-              accessibilityLabel={`${row.label}: ${row.value || 'not set'}`}
+              accessibilityLabel={`${row.label}: ${
+                row.value || t.notSetSpoken
+              }`}
               style={[styles.row, i < vm.contact.length - 1 && styles.divider]}>
               <View style={styles.rowIcon}>
                 <Icon name={row.icon} size={18} color={colors.textLink} />
@@ -112,7 +113,7 @@ export const ProfileScreen = () => {
                 <AppText
                   color={row.value ? 'textBase' : 'textDim'}
                   style={styles.rowValue}>
-                  {row.value || 'Not set'}
+                  {row.value || t.notSet}
                 </AppText>
               </View>
             </View>
@@ -145,7 +146,7 @@ export const ProfileScreen = () => {
       {viewingPhoto && vm.photo && (
         <PhotoViewer
           source={vm.photo}
-          label="Profile photo"
+          label={t.profilePhoto}
           onClose={() => setViewingPhoto(false)}
         />
       )}

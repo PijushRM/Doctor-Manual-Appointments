@@ -9,6 +9,8 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {tr} from 'src/i18n';
+import {filesText} from 'src/i18n/strings/files';
 import {AppText} from './shared/AppText';
 import {Icon} from './shared/Icon';
 
@@ -22,6 +24,7 @@ type Props = {
 // Mount it only while open.
 export const PhotoViewer = ({source, label, onClose}: Props) => {
   const {top} = useSafeAreaInsets();
+  const t = tr(filesText);
   const [state, setState] = useState<'loading' | 'shown' | 'failed'>('loading');
   return (
     <Modal
@@ -34,7 +37,7 @@ export const PhotoViewer = ({source, label, onClose}: Props) => {
       <Pressable
         style={styles.root}
         accessibilityRole="button"
-        accessibilityLabel={`Close ${label.toLowerCase()}`}
+        accessibilityLabel={t.closePhoto(label)}
         onPress={onClose}>
         <Image
           source={source}
@@ -49,9 +52,7 @@ export const PhotoViewer = ({source, label, onClose}: Props) => {
         )}
         {state === 'failed' && (
           <View style={styles.center}>
-            <AppText style={styles.error}>
-              Couldn’t load the photo. Check your internet and try again.
-            </AppText>
+            <AppText style={styles.error}>{t.photoLoadFailed}</AppText>
           </View>
         )}
         <View style={[styles.close, {top: top + 12}]}>

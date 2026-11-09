@@ -1,17 +1,21 @@
 import {formatTime} from 'src/features/appointments/schedule';
+import {tr} from 'src/i18n';
+import {commonText} from 'src/i18n/strings/common';
+import {profileText} from 'src/i18n/strings/profile';
 
 // Displayed Monday first; stored Sunday first (Date#getDay order).
 const MONDAY_FIRST = [1, 2, 3, 4, 5, 6, 0];
-const SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// "Mon–Sat", "Mon–Fri, Sun", "Every day", "Closed".
+// "Mon–Sat", "Mon–Fri, Sun", "Every day", "Closed" (or in Bengali).
 export const formatWorkingDays = (workingDays: boolean[]) => {
+  const t = tr(profileText);
+  const SHORT = tr(commonText).weekdaysShort;
   const open = MONDAY_FIRST.filter(d => workingDays[d]);
   if (open.length === 7) {
-    return 'Every day';
+    return t.everyDay;
   }
   if (!open.length) {
-    return 'Closed';
+    return t.closed;
   }
   const runs: number[][] = [];
   MONDAY_FIRST.forEach((day, i) => {

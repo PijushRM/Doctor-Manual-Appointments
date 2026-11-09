@@ -3,6 +3,8 @@ import {Modal, Pressable, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {Theme} from 'src/configs/theme';
 import {useStyles} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {commonText} from 'src/i18n/strings/common';
 
 type Props = {label: string; onClose: () => void; children: React.ReactNode};
 
@@ -23,7 +25,7 @@ export const Sheet = ({label, onClose, children}: Props) => {
         <Pressable
           style={StyleSheet.absoluteFill}
           accessibilityRole="button"
-          accessibilityLabel={`Close ${label.toLowerCase()}`}
+          accessibilityLabel={tr(commonText).closeSheet(label)}
           onPress={onClose}>
           <View style={styles.backdrop} />
         </Pressable>

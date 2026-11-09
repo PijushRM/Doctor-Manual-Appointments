@@ -8,9 +8,12 @@ import {Button} from 'src/components/shared/Button';
 import {Screen} from 'src/components/shared/Screen';
 import {TextField} from 'src/components/shared/TextField';
 import {
-  PASSWORD_CHANGE_MESSAGES,
+  MIN_PASSWORD_LENGTH,
+  passwordChangeMessage,
   type PasswordChangeError,
 } from 'src/features/auth/credentials';
+import {tr} from 'src/i18n';
+import {changePasswordText} from 'src/i18n/strings/auth';
 import {useAuthStore} from 'src/store/useAuthStore';
 
 // Not in the canvas: three fields in the same style as Login.
@@ -33,6 +36,7 @@ export const ChangePasswordScreen = () => {
   const [saving, setSaving] = useState(false);
   const nextRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
+  const t = tr(changePasswordText);
 
   const field = (key: keyof typeof values) => ({
     value: values[key],
@@ -42,7 +46,7 @@ export const ChangePasswordScreen = () => {
     },
     error:
       error && FIELD_FOR_ERROR[error] === key
-        ? PASSWORD_CHANGE_MESSAGES[error]
+        ? passwordChangeMessage(error)
         : undefined,
     secureTextEntry: true,
     autoCapitalize: 'none' as const,
@@ -61,33 +65,30 @@ export const ChangePasswordScreen = () => {
     setSaving(false);
     setError(result);
     if (result && !FIELD_FOR_ERROR[result]) {
-      Alert.alert('Couldn’t change the password', PASSWORD_CHANGE_MESSAGES[result]);
+      Alert.alert(t.failed, passwordChangeMessage(result));
       return;
     }
     if (!result) {
-      Alert.alert(
-        'Password changed',
-        'Use your new password next time you log in.',
-      );
+      Alert.alert(t.changed, t.changedBody);
       navigation.goBack();
     }
   };
 
   return (
     <Screen>
-      <BackHeader onBack={navigation.goBack} backLabel="Back to settings" />
+      <BackHeader onBack={navigation.goBack} backLabel={t.back} />
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         <AppText variant="headline" accessibilityRole="header">
-          Change{' '}
+          {t.titleStart}
           <AppText variant="headline" color="textLink">
-            password
+            {t.titleAccent}
           </AppText>
         </AppText>
         <TextField
-          label="Current password"
-          placeholder="Enter your current password"
+          label={t.current}
+          placeholder={t.currentPlaceholder}
           {...field('current')}
           autoComplete="current-password"
           returnKeyType="next"
@@ -96,9 +97,9 @@ export const ChangePasswordScreen = () => {
         />
         <TextField
           ref={nextRef}
-          label="New password"
-          placeholder="At least 6 characters"
-          hint="AT LEAST 6 CHARACTERS"
+          label={t.next}
+          placeholder={t.nextPlaceholder(MIN_PASSWORD_LENGTH)}
+          hint={t.nextHint(MIN_PASSWORD_LENGTH)}
           {...field('next')}
           autoComplete="new-password"
           returnKeyType="next"
@@ -107,8 +108,8 @@ export const ChangePasswordScreen = () => {
         />
         <TextField
           ref={confirmRef}
-          label="Confirm new password"
-          placeholder="Type the new password again"
+          label={t.confirm}
+          placeholder={t.confirmPlaceholder}
           {...field('confirm')}
           autoComplete="new-password"
           returnKeyType="done"
@@ -119,7 +120,7 @@ export const ChangePasswordScreen = () => {
       </ScrollView>
       <BottomBar>
         <Button
-          title={saving ? 'Saving…' : 'Save password'}
+          title={saving ? t.saving : t.save}
           disabled={saving}
           onPress={() => {
             save().catch(() => setSaving(false));

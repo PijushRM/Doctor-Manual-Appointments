@@ -1,12 +1,7 @@
 import {API_TIMEOUT_MS, API_URL, UPLOAD_TIMEOUT_MS} from 'src/configs/api';
-import {
-  AppError,
-  OFFLINE_MESSAGE,
-  SERVER_MESSAGE,
-  TIMEOUT_MESSAGE,
-  UNAVAILABLE_MESSAGE,
-  UNEXPECTED_MESSAGE,
-} from 'src/utils/errors';
+import {tr} from 'src/i18n';
+import {errorText} from 'src/i18n/strings/errors';
+import {AppError} from 'src/utils/errors';
 import type {
   Appointment,
   DocType,
@@ -83,10 +78,8 @@ export async function request<T>(path: string, options: Options = {}) {
     response = await fetch(`${API_URL}${path}`, init);
   } catch {
     // Aborted = our own timeout; anything else = no connection.
-    throw new ApiError(
-      0,
-      controller.signal.aborted ? TIMEOUT_MESSAGE : OFFLINE_MESSAGE,
-    );
+    const t = tr(errorText);
+    throw new ApiError(0, controller.signal.aborted ? t.timeout : t.offline);
   } finally {
     clearTimeout(timer);
   }
@@ -111,7 +104,7 @@ export async function request<T>(path: string, options: Options = {}) {
     );
   }
   if (body === null) {
-    throw new ApiError(response.status, UNEXPECTED_MESSAGE);
+    throw new ApiError(response.status, tr(errorText).unexpected);
   }
   return body as unknown as T;
 }
@@ -124,33 +117,35 @@ export const messageFor = (
   body: {error?: string; details?: FieldErrors} | null,
   auth = true,
 ): string => {
+  const t = tr(errorText);
+  // Field messages come from the server, which writes them in English.
   const fromServer =
     Object.values(body?.details ?? {})[0] || body?.error || undefined;
   if (status === 401 && auth) {
-    return 'Your session has expired. Please log in again.';
+    return t.sessionExpired;
   }
   if (status === 403) {
-    return 'You don’t have permission to do this.';
+    return t.forbidden;
   }
   if (status === 404) {
-    return fromServer ?? 'This was not found. It may have been deleted.';
+    return fromServer ?? t.notFound;
   }
   if (status === 408 || status === 504) {
-    return TIMEOUT_MESSAGE;
+    return t.timeout;
   }
   if (status === 413) {
-    return 'This file is too large for the server.';
+    return t.tooLargeForServer;
   }
   if (status === 429) {
-    return 'Too many attempts. Please wait a minute and try again.';
+    return t.tooManyAttempts;
   }
   if (status === 502 || status === 503) {
-    return UNAVAILABLE_MESSAGE;
+    return t.unavailable;
   }
   if (status >= 500) {
-    return SERVER_MESSAGE;
+    return t.server;
   }
-  return fromServer ?? 'Please check the details and try again.';
+  return fromServer ?? t.checkDetails;
 };
 
 // ---- Server shapes (see the backend's src/models) ----

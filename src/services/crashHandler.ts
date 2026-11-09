@@ -1,5 +1,6 @@
 import {Alert} from 'react-native';
-import {GENERIC_MESSAGE} from 'src/utils/errors';
+import {tr} from 'src/i18n';
+import {errorText} from 'src/i18n/strings/errors';
 
 type Handler = (error: unknown, isFatal?: boolean) => void;
 type ErrorUtilsType = {
@@ -18,7 +19,8 @@ export const installCrashHandler = () => {
   errorUtils.setGlobalHandler((error, isFatal) => {
     console.error('[Uncaught error]', error);
     if (isFatal) {
-      Alert.alert('Something went wrong', GENERIC_MESSAGE);
+      const t = tr(errorText);
+      Alert.alert(t.crashTitle, t.generic);
     }
   });
 };

@@ -16,6 +16,9 @@ import {
 } from 'src/features/patients/recordEntry';
 import {api} from 'src/services/api';
 import type {StoredFile} from 'src/types/clinic';
+import {tr} from 'src/i18n';
+import {localDigits} from 'src/i18n/format';
+import {filesText} from 'src/i18n/strings/files';
 import {AppError} from 'src/utils/errors';
 
 // Picked but not yet kept: `uri` is temporary (camera cache or content://).
@@ -26,8 +29,10 @@ export type PickedFile = StoredFile & {fromCamera: boolean};
 export class FileTooLargeError extends AppError {
   constructor(readonly size: number) {
     super(
-      `Files must be ${formatSize(MAX_UPLOAD_BYTES)} or smaller. ` +
-        `This one is ${formatSize(size)}.`,
+      tr(filesText).tooLarge(
+        localDigits(formatSize(MAX_UPLOAD_BYTES)),
+        localDigits(formatSize(size)),
+      ),
     );
   }
 }
@@ -39,14 +44,15 @@ const withinLimit = <T extends StoredFile>(file: T): T => {
   return file;
 };
 
-const PHOTO_ERRORS: Record<
-  NonNullable<ImagePickerResponse['errorCode']>,
-  string
-> = {
-  camera_unavailable: 'The camera isn’t available on this phone right now.',
-  permission:
-    'Smile Doctor isn’t allowed to use the camera or photos. Allow it in Settings › Apps › Smile Doctor.',
-  others: 'Couldn’t get the photo. Please try again.',
+const photoError = (
+  code: NonNullable<ImagePickerResponse['errorCode']>,
+): string => {
+  const t = tr(filesText);
+  return {
+    camera_unavailable: t.cameraUnavailable,
+    permission: t.photoPermission,
+    others: t.photoFailed,
+  }[code];
 };
 
 // Photos are scaled down first so a normal camera shot fits the limit.
@@ -62,7 +68,7 @@ const firstPhoto = (
   fromCamera: boolean,
 ): PickedFile | null => {
   if (result.errorCode) {
-    throw new AppError(PHOTO_ERRORS[result.errorCode]);
+    throw new AppError(photoError(result.errorCode));
   }
   const photo = result.assets?.[0];
   if (result.didCancel || !photo?.uri) {
@@ -108,8 +114,8 @@ export const chooseFile = async (): Promise<PickedFile | null> => {
     }
     throw new AppError(
       isErrorWithCode(e) && e.code === errorCodes.UNABLE_TO_OPEN_FILE_TYPE
-        ? 'This kind of file can’t be added. Choose a PDF, JPG or PNG.'
-        : 'Couldn’t get the file. Please try again.',
+        ? tr(filesText).wrongType
+        : tr(filesText).fileFailed,
     );
   }
 };
@@ -125,14 +131,12 @@ export const toUpload = (
 // server via a 5-minute link. Nothing is downloaded into this app.
 export const openFile = async (file: StoredFile) => {
   if (!file.fileId) {
-    throw new AppError('This file isn’t on the server.');
+    throw new AppError(tr(filesText).notOnServer);
   }
   const url = await api.fileLink(file.fileId); // ApiError: already readable
   try {
     await Linking.openURL(url);
   } catch {
-    throw new AppError(
-      'No app on this phone can open it. Install a PDF or photo viewer and try again.',
-    );
+    throw new AppError(tr(filesText).noViewer);
   }
 };

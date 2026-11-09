@@ -15,6 +15,7 @@ export const LoginScreen = () => {
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
   const passwordRef = useRef<TextInput>(null);
+  const {t} = vm;
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -28,25 +29,23 @@ export const LoginScreen = () => {
           <View style={styles.chip}>
             <Icon name="shield" size={14} color={colors.textBase} />
             <AppText variant="caption" color="textBase">
-              Doctor portal
+              {t.portal}
             </AppText>
           </View>
           <AppText variant="headline" accessibilityRole="header">
-            Welcome,{' '}
+            {t.welcome}{' '}
             <AppText variant="headline" color="textLink">
-              Doctor
+              {t.doctor}
             </AppText>
           </AppText>
           <AppText variant="bodySmall">
-            {vm.isRegister
-              ? 'Create your account to keep patients and appointments safe online.'
-              : 'Log in to manage appointments and your patients.'}
+            {vm.isRegister ? t.registerIntro : t.loginIntro}
           </AppText>
         </View>
 
         <View style={styles.fields}>
           <TextField
-            label="Email or registration ID"
+            label={t.identifier}
             icon="mail"
             value={vm.identifier}
             onChangeText={vm.setIdentifier}
@@ -61,8 +60,8 @@ export const LoginScreen = () => {
           />
           <TextField
             ref={passwordRef}
-            label="Password"
-            placeholder="Enter your password"
+            label={t.password}
+            placeholder={t.passwordPlaceholder}
             icon="lock"
             value={vm.password}
             onChangeText={vm.setPassword}
@@ -75,7 +74,7 @@ export const LoginScreen = () => {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={
-                  vm.showPassword ? 'Hide password' : 'Show password'
+                  vm.showPassword ? t.hidePassword : t.showPassword
                 }
                 onPress={vm.toggleShowPassword}
                 style={styles.eye}>
@@ -100,7 +99,7 @@ export const LoginScreen = () => {
             onPress={vm.forgotPassword}
             style={styles.forgot}>
             <AppText variant="label" color="textLink">
-              Forgot password?
+              {t.forgotPassword}
             </AppText>
           </Pressable>
         )}
@@ -120,9 +119,7 @@ export const LoginScreen = () => {
               {vm.switchModeLabel}
             </AppText>
           </Pressable>
-          <AppText variant="bodySmall">
-            For clinic doctors and staff only
-          </AppText>
+          <AppText variant="bodySmall">{t.staffOnly}</AppText>
         </View>
       </ScrollView>
     </Screen>

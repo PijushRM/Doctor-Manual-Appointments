@@ -18,6 +18,7 @@ export const EditProfileDetailsScreen = () => {
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
   const profileStyles = useStyles(makeProfileStyles);
+  const {t} = vm;
 
   return (
     <Screen>
@@ -25,7 +26,7 @@ export const EditProfileDetailsScreen = () => {
         part={1}
         total={2}
         onBack={vm.back}
-        backLabel="Back to profile"
+        backLabel={t.backToProfile}
       />
       <ScrollView
         style={styles.flex}
@@ -33,16 +34,16 @@ export const EditProfileDetailsScreen = () => {
         keyboardShouldPersistTaps="handled">
         <ProgressBar part={1} total={2} />
         <AppText variant="headline" accessibilityRole="header">
-          Edit{' '}
+          {t.editTitle}{' '}
           <AppText variant="headline" color="textLink">
-            profile
+            {t.editTitleAccent}
           </AppText>
         </AppText>
 
         <View style={styles.photoBlock}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Change profile photo"
+            accessibilityLabel={t.changePhoto}
             onPress={vm.changePhoto}>
             {vm.photo ? (
               <Image source={vm.photo} style={profileStyles.photo} />
@@ -62,15 +63,15 @@ export const EditProfileDetailsScreen = () => {
               />
             </View>
           </Pressable>
-          <AppText variant="caption">Tap photo to change</AppText>
+          <AppText variant="caption">{t.tapToChange}</AppText>
         </View>
 
         <AppText variant="heading" accessibilityRole="header">
-          Personal details
+          {t.personalDetails}
         </AppText>
         <TextField
-          label="Full name"
-          placeholder="e.g. Dr. Anita Sen"
+          label={t.fullName}
+          placeholder={t.fullNamePlaceholder}
           // Keyboards "correct" names (Subhas → Subhash).
           autoCorrect={false}
           value={vm.draft.name}
@@ -80,24 +81,24 @@ export const EditProfileDetailsScreen = () => {
           autoComplete="name"
         />
         <TextField
-          label="Qualifications"
+          label={t.qualifications}
           // …and degree abbreviations (FICOI).
           autoCorrect={false}
           value={vm.draft.qualifications}
           onChangeText={vm.setField('qualifications')}
-          placeholder="e.g. BDS, MDS"
+          placeholder={t.qualificationsPlaceholder}
           autoCapitalize="characters"
         />
         <TextField
-          label="Speciality"
+          label={t.speciality}
           value={vm.draft.speciality}
           onChangeText={vm.setField('speciality')}
-          placeholder="e.g. Conservative Dentistry"
+          placeholder={t.specialityPlaceholder}
           autoCapitalize="words"
         />
       </ScrollView>
       <BottomBar>
-        <Button title="Next: contact & clinic" onPress={vm.next} />
+        <Button title={t.nextContact} onPress={vm.next} />
       </BottomBar>
     </Screen>
   );

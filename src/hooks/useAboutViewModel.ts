@@ -4,6 +4,9 @@ import {APP_VERSION, BUILD_NUMBER, DEVELOPER} from 'src/constants/app';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {useNow} from './useNow';
 import {showError} from 'src/utils/showError';
+import {tr} from 'src/i18n';
+import {localDigits} from 'src/i18n/format';
+import {profileText} from 'src/i18n/strings/profile';
 
 const isPlaceholder = (value: string) => value.startsWith('[');
 
@@ -29,34 +32,32 @@ export const useAboutViewModel = () => {
   const clinicName = useDoctorStore(s => s.profile.clinicName);
   const year = useNow().getFullYear();
   const owner = clinicName || 'Smile Doctor';
+  const t = tr(profileText);
 
   const link = (value: string, url: string) =>
     isPlaceholder(value)
       ? undefined
       : () => {
           Linking.openURL(url).catch(e =>
-            showError(
-              'Couldn’t open this link',
-              e,
-              'No app on this phone can open it.',
-            ),
+            showError(t.linkFailed, e, t.linkFallback),
           );
         };
 
   return {
+    t,
     title: splitTitle(owner),
-    version: `DOCTOR APP · VERSION ${APP_VERSION} (BUILD ${BUILD_NUMBER})`,
+    version: t.versionLine(localDigits(APP_VERSION), localDigits(BUILD_NUMBER)),
     developer: [
       {icon: 'briefcase' as const, label: undefined, value: DEVELOPER.name},
       {
         icon: 'mail' as const,
-        label: 'EMAIL',
+        label: t.email,
         value: DEVELOPER.email,
         open: link(DEVELOPER.email, `mailto:${DEVELOPER.email}`),
       },
       {
         icon: 'phone' as const,
-        label: 'PHONE',
+        label: t.phone,
         value: DEVELOPER.phone,
         open: link(
           DEVELOPER.phone,
@@ -65,12 +66,12 @@ export const useAboutViewModel = () => {
       },
       {
         icon: 'globe' as const,
-        label: 'WEBSITE',
+        label: t.website,
         value: DEVELOPER.website,
         open: link(DEVELOPER.website, `https://${DEVELOPER.website}`),
       },
     ],
-    copyright: `© ${year} ${owner}. All rights reserved.`,
+    copyright: t.copyright(localDigits(year), owner),
     back: navigation.goBack,
   };
 };
