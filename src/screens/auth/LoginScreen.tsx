@@ -38,7 +38,9 @@ export const LoginScreen = () => {
             </AppText>
           </AppText>
           <AppText variant="bodySmall">
-            Log in to manage appointments and your patients.
+            {vm.isRegister
+              ? 'Create your account to keep patients and appointments safe online.'
+              : 'Log in to manage appointments and your patients.'}
           </AppText>
         </View>
 
@@ -65,7 +67,7 @@ export const LoginScreen = () => {
             onChangeText={vm.setPassword}
             secureTextEntry={!vm.showPassword}
             autoCapitalize="none"
-            autoComplete="password"
+            autoComplete={vm.isRegister ? 'new-password' : 'password'}
             returnKeyType="go"
             onSubmitEditing={vm.submit}
             trailing={
@@ -91,17 +93,32 @@ export const LoginScreen = () => {
           )}
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          onPress={vm.forgotPassword}
-          style={styles.forgot}>
-          <AppText variant="label" color="textLink">
-            Forgot password?
-          </AppText>
-        </Pressable>
+        {!vm.isRegister && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={vm.forgotPassword}
+            style={styles.forgot}>
+            <AppText variant="label" color="textLink">
+              Forgot password?
+            </AppText>
+          </Pressable>
+        )}
 
         <View style={styles.footer}>
-          <Button title="Log in" onPress={vm.submit} />
+          <Button
+            title={vm.buttonTitle}
+            onPress={vm.submit}
+            disabled={vm.busy}
+          />
+          <Pressable
+            accessibilityRole="button"
+            onPress={vm.switchMode}
+            disabled={vm.busy}
+            style={styles.forgot}>
+            <AppText variant="label" color="textLink">
+              {vm.switchModeLabel}
+            </AppText>
+          </Pressable>
           <AppText variant="bodySmall">
             For clinic doctors and staff only
           </AppText>

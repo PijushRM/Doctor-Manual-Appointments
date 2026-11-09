@@ -25,6 +25,8 @@ import {
   type PickedFile,
 } from 'src/services/fileService';
 import {useClinicStore} from 'src/store/useClinicStore';
+import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
+import {ApiError} from 'src/services/api';
 
 type Route = RouteProp<PatientsStackParamList, 'UploadNote'>;
 
@@ -77,17 +79,21 @@ export const useUploadNoteViewModel = () => {
               file.fromCamera ? photoName(patient.name, new Date()) : file.name,
             )
           : null;
-      const id = addEntry({
+      const id = await addEntry({
         patientId,
         docType: isNote ? null : type,
         file: stored,
         note: note.trim(),
       });
       navigation.navigate('PatientProfile', {patientId, addedEntryId: id});
-    } catch {
+    } catch (e) {
       Alert.alert(
-        'Couldn’t save the file',
-        'The phone may be low on space. Please try again.',
+        isNote ? 'Couldn’t save the note' : 'Couldn’t save the file',
+        e instanceof ApiError
+          ? e.offline
+            ? OFFLINE_MESSAGE
+            : e.message
+          : 'The phone may be low on space. Please try again.',
       );
     } finally {
       setSaving(false);

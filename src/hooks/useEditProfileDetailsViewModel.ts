@@ -14,6 +14,7 @@ import {
   takePhoto,
   type PickedFile,
 } from 'src/services/fileService';
+import {profilePhotoSource} from 'src/features/doctor/photo';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 
 export const useEditProfileDetailsViewModel = () => {
@@ -40,7 +41,7 @@ export const useEditProfileDetailsViewModel = () => {
   return {
     draft,
     errors,
-    photoUri: photo?.uri ?? profile.photoUri,
+    photo: photo ? {uri: photo.uri} : profilePhotoSource(profile),
     initials: doctorInitials(draft.name || 'Doctor'),
     setField: (field: keyof DetailsDraft) => (value: string) => {
       setDraft(d => ({...d, [field]: value}));

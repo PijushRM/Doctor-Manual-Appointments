@@ -16,11 +16,13 @@ import {useAuthStore} from 'src/store/useAuthStore';
 // Not in the canvas: three fields in the same style as Login.
 const FIELD_FOR_ERROR: Record<
   PasswordChangeError,
-  'current' | 'next' | 'confirm'
+  'current' | 'next' | 'confirm' | null
 > = {
   wrongCurrent: 'current',
   shortPassword: 'next',
   notMatching: 'confirm',
+  offline: null,
+  server: null,
 };
 
 export const ChangePasswordScreen = () => {
@@ -28,6 +30,7 @@ export const ChangePasswordScreen = () => {
   const changePassword = useAuthStore(s => s.changePassword);
   const [values, setValues] = useState({current: '', next: '', confirm: ''});
   const [error, setError] = useState<PasswordChangeError | null>(null);
+  const [saving, setSaving] = useState(false);
   const nextRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
@@ -45,9 +48,22 @@ export const ChangePasswordScreen = () => {
     autoCapitalize: 'none' as const,
   });
 
-  const save = () => {
-    const result = changePassword(values.current, values.next, values.confirm);
+  const save = async () => {
+    if (saving) {
+      return;
+    }
+    setSaving(true);
+    const result = await changePassword(
+      values.current,
+      values.next,
+      values.confirm,
+    ).catch((): PasswordChangeError => 'server');
+    setSaving(false);
     setError(result);
+    if (result && !FIELD_FOR_ERROR[result]) {
+      Alert.alert('Couldn’t change the password', PASSWORD_CHANGE_MESSAGES[result]);
+      return;
+    }
     if (!result) {
       Alert.alert(
         'Password changed',
@@ -93,11 +109,19 @@ export const ChangePasswordScreen = () => {
           {...field('confirm')}
           autoComplete="new-password"
           returnKeyType="done"
-          onSubmitEditing={save}
+          onSubmitEditing={() => {
+            save().catch(() => setSaving(false));
+          }}
         />
       </ScrollView>
       <BottomBar>
-        <Button title="Save password" onPress={save} />
+        <Button
+          title={saving ? 'Saving…' : 'Save password'}
+          disabled={saving}
+          onPress={() => {
+            save().catch(() => setSaving(false));
+          }}
+        />
       </BottomBar>
     </Screen>
   );

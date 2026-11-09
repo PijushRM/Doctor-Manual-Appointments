@@ -31,3 +31,6 @@ class MMKVLoader {
 }
 
 mock.module('react-native-mmkv-storage', () => ({MMKVLoader}));
+
+// React Native's build flag; src/configs/api.ts picks the dev server with it.
+(globalThis as {__DEV__?: boolean}).__DEV__ = true;

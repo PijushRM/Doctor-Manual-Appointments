@@ -1,7 +1,5 @@
 import {addDays, setHours, setMinutes, startOfDay, subDays} from 'date-fns';
 import type {Appointment, Patient} from 'src/types/clinic';
-import {useClinicStore} from './useClinicStore';
-import {useDoctorStore} from './useDoctorStore';
 
 // The canvas's sample patients, dated relative to `now`. Debug builds only.
 const DEMO: [
@@ -57,11 +55,3 @@ export const buildDemoData = (now: Date) => {
   return {patients, appointments, doctor};
 };
 
-export const seedDemoDataIfEmpty = (now = new Date()) => {
-  if (useClinicStore.getState().patients.length) {
-    return;
-  }
-  const {patients, appointments, doctor} = buildDemoData(now);
-  useClinicStore.setState({patients, appointments});
-  useDoctorStore.setState(s => ({profile: {...s.profile, ...doctor}}));
-};

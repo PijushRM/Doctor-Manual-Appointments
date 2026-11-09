@@ -44,8 +44,8 @@ export const EditProfileDetailsScreen = () => {
             accessibilityRole="button"
             accessibilityLabel="Change profile photo"
             onPress={vm.changePhoto}>
-            {vm.photoUri ? (
-              <Image source={{uri: vm.photoUri}} style={profileStyles.photo} />
+            {vm.photo ? (
+              <Image source={vm.photo} style={profileStyles.photo} />
             ) : (
               <View style={styles.avatar}>
                 <AppText style={styles.avatarText} color="textLink">

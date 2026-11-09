@@ -1,8 +1,8 @@
 import {describe, expect, it} from 'bun:test';
 import {
-  createAccount,
-  matchesAccount,
+  normalizeIdentifier,
   validateLogin,
+  validatePasswordChange,
 } from 'src/features/auth/credentials';
 
 describe('validateLogin', () => {
@@ -16,36 +16,18 @@ describe('validateLogin', () => {
   });
 });
 
-describe('createAccount / matchesAccount', () => {
-  const account = createAccount(
-    ' Dr.Subhas@SmileDental.in ',
-    'password123',
-    'salt',
-  );
-
-  it('stores a normalized identifier and no plain password', () => {
-    expect(account.identifier).toBe('dr.subhas@smiledental.in');
-    expect(JSON.stringify(account)).not.toContain('password123');
-  });
-
-  it('matches the same credentials, ignoring identifier case and spaces', () => {
-    expect(
-      matchesAccount(account, 'DR.SUBHAS@smiledental.in', 'password123'),
-    ).toBe(true);
-  });
-
-  it('rejects a wrong password or identifier', () => {
-    expect(
-      matchesAccount(account, 'dr.subhas@smiledental.in', 'password124'),
-    ).toBe(false);
-    expect(matchesAccount(account, 'someone@else.in', 'password123')).toBe(
-      false,
+describe('normalizeIdentifier', () => {
+  it('ignores case and surrounding spaces', () => {
+    expect(normalizeIdentifier(' Dr.Subhas@SmileDental.in ')).toBe(
+      'dr.subhas@smiledental.in',
     );
   });
+});
 
-  it('salts the hash', () => {
-    expect(createAccount('a@b.in', 'password123', 'other').hash).not.toBe(
-      createAccount('a@b.in', 'password123', 'salt').hash,
-    );
+describe('validatePasswordChange', () => {
+  it('checks length, then confirmation', () => {
+    expect(validatePasswordChange('short', 'short')).toBe('shortPassword');
+    expect(validatePasswordChange('newpass1', 'newpass2')).toBe('notMatching');
+    expect(validatePasswordChange('newpass1', 'newpass1')).toBeNull();
   });
 });

@@ -112,7 +112,11 @@ export const NewAppointmentDateTimeScreen = () => {
         <AppText variant="caption" style={styles.summary}>
           {vm.summary}
         </AppText>
-        <Button title="Save appointment" onPress={vm.save} />
+        <Button
+          title={vm.saving ? 'Saving…' : 'Save appointment'}
+          onPress={vm.save}
+          disabled={vm.saving}
+        />
       </BottomBar>
 
       {vm.calendarOpen && (

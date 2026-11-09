@@ -6,6 +6,7 @@ import {formatClinicHours} from 'src/features/doctor/clinicHours';
 import {doctorInitials, splitSurname} from 'src/features/patients/patients';
 import type {ProfileStackParamList} from 'src/navigation/types';
 import {useClinicStore} from 'src/store/useClinicStore';
+import {profilePhotoSource} from 'src/features/doctor/photo';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {useNow} from './useNow';
 
@@ -20,7 +21,7 @@ export const useProfileViewModel = () => {
   const name = profile.name || 'Doctor';
 
   return {
-    photoUri: profile.photoUri,
+    photo: profilePhotoSource(profile),
     initials: doctorInitials(name),
     ...splitSurname(name),
     credentials: [profile.qualifications, profile.speciality]

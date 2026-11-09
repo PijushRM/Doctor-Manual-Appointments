@@ -17,6 +17,8 @@ import {
 import {initials, splitSurname} from 'src/features/patients/patients';
 import {addedMessage} from 'src/features/patients/recordEntry';
 import type {PatientsStackParamList} from 'src/navigation/types';
+import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
+import {ApiError} from 'src/services/api';
 import {openFile} from 'src/services/fileService';
 import {useClinicStore} from 'src/store/useClinicStore';
 import type {StoredFile} from 'src/types/clinic';
@@ -71,10 +73,14 @@ export const usePatientProfileViewModel = () => {
       isNew: e.key === freshId,
     })),
     open: (file: StoredFile) =>
-      openFile(file).catch(() =>
+      openFile(file).catch(e =>
         Alert.alert(
           'Can’t open this file',
-          'No app on this phone can open it. Install a PDF or photo viewer and try again.',
+          e instanceof ApiError
+            ? e.offline
+              ? OFFLINE_MESSAGE
+              : e.message
+            : 'No app on this phone can open it. Install a PDF or photo viewer and try again.',
         ),
       ),
     back: navigation.goBack,

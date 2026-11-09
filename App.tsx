@@ -8,16 +8,13 @@ import {
   NavigationContainer,
 } from '@react-navigation/native';
 import {useReminderSync} from 'src/hooks/useReminderSync';
+import {useServerSync} from 'src/hooks/useServerSync';
 import {useTheme} from 'src/hooks/useTheme';
 import {RootNavigator} from 'src/navigation/RootNavigator';
-import {seedDemoDataIfEmpty} from 'src/store/demoData';
-
-if (__DEV__) {
-  seedDemoDataIfEmpty();
-}
 
 const App = () => {
   const theme = useTheme();
+  useServerSync();
   useReminderSync();
   const base = theme.dark ? DarkTheme : DefaultTheme;
   const navTheme = {

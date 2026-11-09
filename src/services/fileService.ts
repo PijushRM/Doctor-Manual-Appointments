@@ -5,13 +5,14 @@ import {
   pick,
 } from '@react-native-documents/picker';
 import {viewDocument} from '@react-native-documents/viewer';
-import {LogBox} from 'react-native';
+import {Linking, LogBox} from 'react-native';
 import {
   launchCamera,
   launchImageLibrary,
   type ImagePickerResponse,
 } from 'react-native-image-picker';
 import {ACCEPTED_MIME_TYPES} from 'src/features/patients/recordEntry';
+import {api} from 'src/services/api';
 import type {StoredFile} from 'src/types/clinic';
 
 // Picked but not yet kept: `uri` is temporary (camera cache or content://).
@@ -92,10 +93,25 @@ export const keepFile = async (
   return {...file, name, uri: copy.localUri};
 };
 
-// Hands the file to whichever app opens it (PDF viewer, Photos…).
-export const openFile = (file: StoredFile) =>
-  viewDocument({
-    uri: file.uri,
-    mimeType: file.mimeType,
-    grantPermissions: 'read',
-  });
+// Hands the file to whichever app opens it (PDF viewer, Photos…). A file this
+// phone never had (uploaded elsewhere) opens from the server via a 5-minute link.
+export const openFile = async (file: StoredFile) => {
+  if (file.uri) {
+    try {
+      return await viewDocument({
+        uri: file.uri,
+        mimeType: file.mimeType,
+        grantPermissions: 'read',
+      });
+    } catch (e) {
+      if (!file.fileId) {
+        throw e;
+      }
+      // The local copy is gone (app data cleared): fall back to the server.
+    }
+  }
+  if (!file.fileId) {
+    throw new Error('File has no local or server copy');
+  }
+  return Linking.openURL(await api.fileLink(file.fileId));
+};

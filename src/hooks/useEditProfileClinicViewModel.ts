@@ -13,6 +13,8 @@ import {
   type ProfileErrors,
 } from 'src/features/doctor/profileForm';
 import type {ProfileStackParamList} from 'src/navigation/types';
+import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
+import {ApiError} from 'src/services/api';
 import {keepFile} from 'src/services/fileService';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 
@@ -39,7 +41,7 @@ export const useEditProfileClinicViewModel = () => {
     useRoute<RouteProp<ProfileStackParamList, 'EditProfileClinic'>>().params
       ?.details;
   const profile = useDoctorStore(s => s.profile);
-  const updateProfile = useDoctorStore(s => s.updateProfile);
+  const saveProfile = useDoctorStore(s => s.saveProfile);
 
   const [draft, setDraft] = useState<ClinicDraft>(() => ({
     email: profile.email,
@@ -67,18 +69,22 @@ export const useEditProfileClinicViewModel = () => {
     setSaving(true);
     try {
       const {photo, ...personal} = details ?? {};
-      const photoUri = photo
-        ? (await keepFile(photo, `ProfilePhoto_${Date.now()}.jpg`)).uri
+      // Kept on the phone too, so the profile shows it without downloading.
+      const stored = photo
+        ? await keepFile(photo, `ProfilePhoto_${Date.now()}.jpg`)
         : undefined;
-      updateProfile({...values, ...personal, ...(photoUri && {photoUri})});
+      await saveProfile({...values, ...personal}, stored);
       // From part 1 → back to Profile; from Settings › Availability → Settings.
       if (details) {
         navigation.navigate('Profile');
       } else {
         navigation.goBack();
       }
-    } catch {
-      Alert.alert('Couldn’t save the photo', 'Please try again.');
+    } catch (e) {
+      Alert.alert(
+        'Couldn’t save your profile',
+        e instanceof ApiError && !e.offline ? e.message : OFFLINE_MESSAGE,
+      );
     } finally {
       setSaving(false);
     }

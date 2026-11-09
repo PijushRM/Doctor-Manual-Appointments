@@ -50,7 +50,7 @@ export const useSettingsViewModel = () => {
     logOut: () =>
       Alert.alert(
         'Log out?',
-        'Your patients and appointments stay on this phone. You’ll need your password to log back in.',
+        'Your patients and appointments are saved to your account. You’ll need your password to log back in.',
         [
           {text: 'Cancel', style: 'cancel'},
           {text: 'Log out', style: 'destructive', onPress: logOut},

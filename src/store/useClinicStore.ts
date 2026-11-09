@@ -1,59 +1,67 @@
 import {create} from 'zustand';
 import {persist} from 'zustand/middleware';
 import {zustandStorage} from 'src/configs/storage';
-import {findExistingPatient} from 'src/features/patients/patientDraft';
+import {api, toEntry} from 'src/services/api';
 import type {
   Appointment,
   NewPatient,
   Patient,
   RecordEntry,
 } from 'src/types/clinic';
-import {makeId} from 'src/utils/id';
 
+export type BookingWarnings = {overlaps: string[]; inPast: boolean};
+
+// A cache of the server's data, kept on the phone so screens and reminders
+// work offline. Saves go to the server first; the cache updates on success.
 type ClinicState = {
   patients: Patient[];
   appointments: Appointment[];
-  // Reuses a matching patient (same name + phone), else adds one.
-  // Returns the new appointment's id.
-  addAppointment: (patient: NewPatient, startsAt: Date, now?: Date) => string;
   entries: RecordEntry[];
+  // The server reuses a matching patient (same name + phone), else adds one.
+  // Throws ApiError when the server can't be reached or refuses.
+  addAppointment: (
+    patient: NewPatient,
+    startsAt: Date,
+  ) => Promise<{id: string; warnings: BookingWarnings}>;
   // Uploads and notes ("Add to record"). Returns the new entry's id.
-  addEntry: (entry: Omit<RecordEntry, 'id' | 'at'>, now?: Date) => string;
+  addEntry: (entry: Omit<RecordEntry, 'id' | 'at'>) => Promise<string>;
 };
+
+const upsert = <T extends {id: string}>(list: T[], item: T) =>
+  list.some(x => x.id === item.id)
+    ? list.map(x => (x.id === item.id ? item : x))
+    : [...list, item];
 
 export const useClinicStore = create<ClinicState>()(
   persist(
-    (set, get): ClinicState => ({
+    (set): ClinicState => ({
       patients: [],
       appointments: [],
       entries: [],
-      addEntry: (entry, now = new Date()) => {
-        const id = makeId();
+      addAppointment: async (patient, startsAt) => {
+        const {data, warnings} = await api.bookAppointment(startsAt, {patient});
         set(s => ({
-          entries: [...s.entries, {...entry, id, at: now.toISOString()}],
+          patients: upsert(s.patients, data.patient),
+          appointments: upsert(s.appointments, data.appointment),
         }));
-        return id;
+        return {id: data.appointment.id, warnings};
       },
-      addAppointment: (patient, startsAt, now = new Date()) => {
-        const existing = findExistingPatient(get().patients, patient);
-        const saved = existing ?? {
-          ...patient,
-          id: makeId(),
-          createdAt: now.toISOString(),
-        };
-        const appointment = {
-          id: makeId(),
-          patientId: saved.id,
-          startsAt: startsAt.toISOString(),
-          createdAt: now.toISOString(),
-        };
-        set(s => ({
-          patients: existing ? s.patients : [...s.patients, saved],
-          appointments: [...s.appointments, appointment],
-        }));
-        return appointment.id;
+      addEntry: async entry => {
+        const {data} = await api.addRecord(entry.patientId, entry);
+        // Keep the local copy so this phone opens the file without downloading.
+        const saved = toEntry(data, entry.file?.uri);
+        set(s => ({entries: upsert(s.entries, saved)}));
+        return saved.id;
       },
     }),
-    {name: 'clinic', storage: zustandStorage},
+    {
+      name: 'clinic',
+      storage: zustandStorage,
+      partialize: s => ({
+        patients: s.patients,
+        appointments: s.appointments,
+        entries: s.entries,
+      }),
+    },
   ),
 );

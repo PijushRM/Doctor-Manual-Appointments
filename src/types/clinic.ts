@@ -20,9 +20,11 @@ export type NewPatient = Omit<Patient, 'id' | 'createdAt'>;
 
 export type DocType = 'prescription' | 'report' | 'xray' | 'other';
 
-// A copy kept in the app's documents folder (not the picker's temporary uri).
+// `uri` is the local copy (empty when this phone never had one); `fileId` is the
+// server copy (missing only for a file not yet uploaded).
 export type StoredFile = {
   uri: string;
+  fileId?: string;
   name: string;
   size: number; // bytes
   mimeType: string;
@@ -49,5 +51,6 @@ export type DoctorProfile = {
   opens: number; // minutes from midnight
   closes: number;
   workingDays: boolean[]; // 7 entries, Sunday first (Date#getDay order)
-  photoUri: string;
+  photoUri: string; // local copy, if this phone has one
+  photoUrl: string; // server path, e.g. /api/files/<id>
 };
