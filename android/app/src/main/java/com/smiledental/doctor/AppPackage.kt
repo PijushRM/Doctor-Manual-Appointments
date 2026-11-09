@@ -5,6 +5,7 @@ import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
+import com.smiledental.doctor.feedback.FeedbackModule
 import com.smiledental.doctor.permissions.PermissionsModule
 import com.smiledental.doctor.sms.SmsModule
 
@@ -15,11 +16,15 @@ class AppPackage : BaseReactPackage() {
       when (name) {
         SmsModule.NAME -> SmsModule(reactContext)
         PermissionsModule.NAME -> PermissionsModule(reactContext)
+        FeedbackModule.NAME -> FeedbackModule(reactContext)
         else -> null
       }
 
   override fun getReactModuleInfoProvider() = ReactModuleInfoProvider {
-    listOf(SmsModule::class.java to SmsModule.NAME, PermissionsModule::class.java to PermissionsModule.NAME)
+    listOf(
+            SmsModule::class.java to SmsModule.NAME,
+            PermissionsModule::class.java to PermissionsModule.NAME,
+            FeedbackModule::class.java to FeedbackModule.NAME)
         .associate { (cls, name) ->
           name to
               ReactModuleInfo(

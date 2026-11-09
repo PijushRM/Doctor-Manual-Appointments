@@ -1,5 +1,5 @@
-import React from 'react';
-import {Pressable, ScrollView, View} from 'react-native';
+import React, {useEffect, useRef} from 'react';
+import {FlatList, Pressable, ScrollView, View} from 'react-native';
 import {CalendarSheet} from 'src/components/CalendarSheet';
 import {TimeWheel} from 'src/components/TimeWheel';
 import {AppText} from 'src/components/shared/AppText';
@@ -10,13 +10,30 @@ import {Screen} from 'src/components/shared/Screen';
 import {ProgressBar, StepHeader} from 'src/components/shared/StepHeader';
 import {useNewAppointmentDateTimeViewModel} from 'src/hooks/useNewAppointmentDateTimeViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
-import {makeStyles} from './dateTimeStyles';
+import {tick} from 'src/services/feedback';
+import {DATE_CHIP_STEP, makeStyles} from './dateTimeStyles';
 
 // Artboards: doctor/DocAdd2 (scroll wheel = Option A), DocAdd2Cal (calendar open).
 export const NewAppointmentDateTimeScreen = () => {
   const vm = useNewAppointmentDateTimeViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const datesRef = useRef<FlatList<(typeof vm.dates)[number]>>(null);
+  const selectedDate = vm.dates.findIndex(d => d.selected);
+
+  // Keep the chosen day in view: on open, and when picked on the calendar.
+  const firstScroll = useRef(true);
+  useEffect(() => {
+    if (selectedDate < 0) {
+      return;
+    }
+    datesRef.current?.scrollToIndex({
+      index: selectedDate,
+      viewPosition: 0.5,
+      animated: !firstScroll.current,
+    });
+    firstScroll.current = false;
+  }, [selectedDate]);
 
   return (
     <Screen>
@@ -51,17 +68,30 @@ export const NewAppointmentDateTimeScreen = () => {
             <Icon name="chevronDown" size={18} color={colors.textBase} />
           </Pressable>
         </View>
-        <ScrollView
+        <FlatList
+          ref={datesRef}
           horizontal
+          data={vm.dates}
+          keyExtractor={date => date.key}
+          getItemLayout={(_, index) => ({
+            length: DATE_CHIP_STEP,
+            offset: DATE_CHIP_STEP * index,
+            index,
+          })}
+          initialNumToRender={10}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dates}>
-          {vm.dates.map(date => (
+          snapToInterval={DATE_CHIP_STEP}
+          decelerationRate="fast"
+          contentContainerStyle={styles.dates}
+          renderItem={({item: date}) => (
             <Pressable
-              key={date.key}
               accessibilityRole="radio"
               accessibilityLabel={date.label}
               accessibilityState={{selected: date.selected}}
-              onPress={date.pick}
+              onPress={() => {
+                tick();
+                date.pick();
+              }}
               style={[styles.date, date.selected && styles.dateOn]}>
               <AppText
                 variant="caption"
@@ -74,14 +104,14 @@ export const NewAppointmentDateTimeScreen = () => {
                 {date.dayOfMonth}
               </AppText>
             </Pressable>
-          ))}
-        </ScrollView>
+          )}
+        />
 
         <View style={styles.sectionRow}>
           <AppText variant="heading" accessibilityRole="header">
             Time
           </AppText>
-          <AppText variant="caption">TAP OR SWIPE TO ROLL</AppText>
+          <AppText variant="caption">SCROLL OR TAP</AppText>
         </View>
         <TimeWheel minutes={vm.minutes} onChange={vm.setMinutes} />
 

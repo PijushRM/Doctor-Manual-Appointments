@@ -20,10 +20,12 @@ import {showError} from 'src/utils/showError';
 export type Channel = 'sms' | 'whatsapp' | 'facebook';
 type Status = 'idle' | 'sending' | 'sent';
 
-const CHANNELS: {key: Channel; label: string}[] = [
-  {key: 'sms', label: 'SMS'},
-  {key: 'whatsapp', label: 'WhatsApp'},
-  {key: 'facebook', label: 'Facebook'},
+// WhatsApp and Messenger are switched off for now: shown, but greyed out
+// and not tappable. Set `enabled: true` to bring one back.
+const CHANNELS: {key: Channel; label: string; enabled: boolean}[] = [
+  {key: 'sms', label: 'SMS', enabled: true},
+  {key: 'whatsapp', label: 'WhatsApp', enabled: false},
+  {key: 'facebook', label: 'Facebook', enabled: false},
 ];
 
 const SEND_FAILED: Record<Channel, string> = {

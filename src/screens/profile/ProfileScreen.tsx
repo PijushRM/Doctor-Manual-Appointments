@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Image, Pressable, ScrollView, View} from 'react-native';
+import {PhotoViewer} from 'src/components/PhotoViewer';
 import {AppText} from 'src/components/shared/AppText';
 import {Icon, type IconName} from 'src/components/shared/Icon';
 import {Screen} from 'src/components/shared/Screen';
@@ -13,6 +14,7 @@ export const ProfileScreen = () => {
   const vm = useProfileViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
+  const [viewingPhoto, setViewingPhoto] = useState(false);
 
   const linkRows: {
     icon: IconName;
@@ -36,28 +38,38 @@ export const ProfileScreen = () => {
       </AppText>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.identity}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Edit profile"
-            onPress={vm.editProfile}>
-            {vm.photo ? (
-              <Image source={vm.photo} style={styles.photo} />
-            ) : (
-              <View style={styles.avatar}>
-                <AppText style={styles.avatarText} color="textLink">
-                  {vm.initials}
-                </AppText>
-              </View>
-            )}
-            <View style={styles.badge}>
+          <View>
+            {/* Tap the photo to see it full size; the pencil edits. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                vm.photo ? 'View profile photo' : 'Edit profile'
+              }
+              onPress={vm.photo ? () => setViewingPhoto(true) : vm.editProfile}>
+              {vm.photo ? (
+                <Image source={vm.photo} style={styles.photo} />
+              ) : (
+                <View style={styles.avatar}>
+                  <AppText style={styles.avatarText} color="textLink">
+                    {vm.initials}
+                  </AppText>
+                </View>
+              )}
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
+              hitSlop={8}
+              onPress={vm.editProfile}
+              style={styles.badge}>
               <Icon
                 name="pencil"
                 size={14}
                 strokeWidth={2}
                 color={colors.textInverse}
               />
-            </View>
-          </Pressable>
+            </Pressable>
+          </View>
           <AppText style={styles.name}>
             {vm.firstNames}
             <AppText style={styles.name} color="textLink">
@@ -130,6 +142,13 @@ export const ProfileScreen = () => {
           ))}
         </View>
       </ScrollView>
+      {viewingPhoto && vm.photo && (
+        <PhotoViewer
+          source={vm.photo}
+          label="Profile photo"
+          onClose={() => setViewingPhoto(false)}
+        />
+      )}
     </Screen>
   );
 };

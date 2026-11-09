@@ -1,4 +1,9 @@
-import {addDays, isSameDay, startOfDay} from 'date-fns';
+import {
+  addDays,
+  differenceInCalendarDays,
+  isSameDay,
+  startOfDay,
+} from 'date-fns';
 import {
   CLASH_WINDOW_MINUTES,
   DATE_STRIP_DAYS,
@@ -37,12 +42,6 @@ export const atMinutes = (day: Date, minutes: number) => {
 export const wrap = (value: number, count: number, start: number) =>
   ((((value - start) % count) + count) % count) + start;
 
-export const wheelColumn = (current: number, count: number, start: number) =>
-  [-2, -1, 0, 1, 2].map(offset => ({
-    offset,
-    value: wrap(current + offset, count, start),
-  }));
-
 export const bookedMinutes = (appointments: Appointment[], day: Date) =>
   appointments
     .map(a => new Date(a.startsAt))
@@ -72,10 +71,14 @@ export const freeSoon = (
 };
 
 // Seven pills starting the day before the selection, never before today.
+// The scrollable date row: a fixed run of days from today, so picking a day
+// doesn't shift the row. A day picked further out on the calendar extends it.
 export const dateStrip = (selected: Date, today: Date) => {
-  const before = addDays(startOfDay(selected), -1);
-  const start = before < startOfDay(today) ? startOfDay(today) : before;
-  return Array.from({length: DATE_STRIP_DAYS}, (_, i) => addDays(start, i));
+  const start = startOfDay(selected < today ? selected : today);
+  const needed = differenceInCalendarDays(selected, start) + 1;
+  return Array.from({length: Math.max(DATE_STRIP_DAYS, needed)}, (_, i) =>
+    addDays(start, i),
+  );
 };
 
 export const ALL_DAYS = [true, true, true, true, true, true, true];

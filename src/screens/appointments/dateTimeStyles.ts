@@ -1,6 +1,10 @@
 import {StyleSheet} from 'react-native';
 import type {Theme} from 'src/configs/theme';
 
+// Each day in the date row: 56 wide plus an 8 gap (used for snapping).
+const DATE_CHIP_WIDTH = 56;
+export const DATE_CHIP_STEP = 64;
+
 export const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     flex: {flex: 1},
@@ -23,9 +27,10 @@ export const makeStyles = (theme: Theme) =>
       borderColor: theme.colors.ring,
       backgroundColor: theme.colors.chip,
     },
-    dates: {gap: 8, padding: 2},
+    dates: {padding: 2},
     date: {
-      width: 56,
+      width: DATE_CHIP_WIDTH,
+      marginRight: DATE_CHIP_STEP - DATE_CHIP_WIDTH,
       height: 64,
       borderRadius: 999,
       borderWidth: 1,

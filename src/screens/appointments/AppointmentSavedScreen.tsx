@@ -83,20 +83,29 @@ export const AppointmentSavedScreen = () => {
           <View style={styles.channels}>
             {vm.channels.map(c => {
               const sent = c.status === 'sent';
+              const off = !c.enabled;
               return (
                 <Pressable
                   key={c.key}
                   accessibilityRole="button"
                   accessibilityLabel={
-                    sent ? `${c.label}: sent` : `Send by ${c.label}`
+                    off
+                      ? `${c.label}: not available`
+                      : sent
+                      ? `${c.label}: sent`
+                      : `Send by ${c.label}`
                   }
-                  accessibilityState={{busy: c.status === 'sending'}}
-                  disabled={c.status === 'sending'}
+                  accessibilityState={{
+                    busy: c.status === 'sending',
+                    disabled: off,
+                  }}
+                  disabled={off || c.status === 'sending'}
                   onPress={c.send}
                   style={({pressed}) => [
                     styles.channel,
                     sent && styles.channelSent,
                     c.status === 'sending' && styles.channelBusy,
+                    off && styles.channelOff,
                     pressed && styles.pressed,
                   ]}>
                   <Icon
@@ -195,6 +204,7 @@ const makeStyles = (theme: Theme) =>
       borderColor: 'transparent',
     },
     channelBusy: {opacity: 0.5},
+    channelOff: {opacity: 0.3},
     pressed: {transform: [{scale: 0.97}]},
     message: {
       paddingVertical: 10,

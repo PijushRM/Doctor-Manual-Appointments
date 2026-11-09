@@ -25,7 +25,7 @@ export const TimeSheet = ({title, minutes, onDone, onClose}: Props) => {
       </AppText>
       <TimeWheel minutes={value} onChange={setValue} />
       <AppText variant="caption" style={styles.hint}>
-        Tap or swipe to roll
+        Scroll or tap a time
       </AppText>
       <Button title="Done" onPress={() => onDone(value)} />
     </Sheet>

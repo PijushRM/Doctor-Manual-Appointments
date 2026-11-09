@@ -14,4 +14,5 @@ export const CLASH_WINDOW_MINUTES = 30;
 export const QUICK_PICK_STEP_MINUTES = 15;
 export const QUICK_PICK_COUNT = 3;
 
-export const DATE_STRIP_DAYS = 7;
+// Days in the scrollable date row on New Appointment, starting today.
+export const DATE_STRIP_DAYS = 90;

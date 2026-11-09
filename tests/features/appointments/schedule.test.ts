@@ -1,6 +1,9 @@
 import {describe, expect, it} from 'bun:test';
 import {format} from 'date-fns';
-import {DEFAULT_CLINIC_HOURS} from 'src/constants/appointments';
+import {
+  DATE_STRIP_DAYS,
+  DEFAULT_CLINIC_HOURS,
+} from 'src/constants/appointments';
 import {
   atMinutes,
   bookedMinutes,
@@ -11,7 +14,6 @@ import {
   initialSlot,
   joinTime,
   splitTime,
-  wheelColumn,
 } from 'src/features/appointments/schedule';
 import type {Appointment} from 'src/types/clinic';
 
@@ -47,16 +49,6 @@ describe('time parts', () => {
   });
 });
 
-describe('wheelColumn', () => {
-  it('shows two values either side and wraps around', () => {
-    expect(wheelColumn(1, 12, 1).map(r => r.value)).toEqual([11, 12, 1, 2, 3]);
-    expect(wheelColumn(0, 60, 0).map(r => r.value)).toEqual([58, 59, 0, 1, 2]);
-    expect(wheelColumn(30, 60, 0).map(r => r.offset)).toEqual([
-      -2, -1, 0, 1, 2,
-    ]);
-  });
-});
-
 describe('bookings', () => {
   const booked = bookedMinutes(friBookings, fri);
 
@@ -88,21 +80,19 @@ describe('bookings', () => {
 describe('dateStrip', () => {
   const day = (d: Date) => format(d, 'd MMM');
 
-  it('starts the day before the selection', () => {
-    const strip = dateStrip(new Date(2025, 9, 27), fri);
-    expect(strip.map(day)).toEqual([
-      '26 Oct',
-      '27 Oct',
-      '28 Oct',
-      '29 Oct',
-      '30 Oct',
-      '31 Oct',
-      '1 Nov',
-    ]);
+  it('is a fixed run of days from today that doesn’t move with the selection', () => {
+    const a = dateStrip(fri, fri);
+    const b = dateStrip(new Date(2025, 9, 30), fri);
+    expect(a).toHaveLength(DATE_STRIP_DAYS);
+    expect(day(a[0])).toBe('24 Oct');
+    expect(b.map(day)).toEqual(a.map(day));
   });
 
-  it('never starts before today', () => {
-    expect(day(dateStrip(fri, fri)[0])).toBe('24 Oct');
+  it('extends to a day picked further out on the calendar', () => {
+    const far = new Date(2026, 5, 1);
+    const strip = dateStrip(far, fri);
+    expect(day(strip[0])).toBe('24 Oct');
+    expect(day(strip.at(-1)!)).toBe('1 Jun');
   });
 });
 
