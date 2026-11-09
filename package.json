@@ -6,6 +6,7 @@
   "scripts": {
     "android": "react-native run-android",
     "apk": "sh scripts/build-apk.sh",
+    "apk:debug": "sh scripts/build-apk.sh debug",
     "apk:install": "adb=$HOME/Library/Android/sdk/platform-tools/adb; $adb install -r \"$(ls -t $HOME/Downloads/SmileDoctor-*.apk | head -1)\"",
     "lint": "eslint .",
     "start": "react-native start",

@@ -1,7 +1,9 @@
 #!/bin/sh
-# Builds a release APK (JavaScript bundled in, no Metro needed) and copies it
-# to ~/Downloads/SmileDoctor-v<version>-<build>.apk. Run with: bun run apk
-# Uses the API_URL etc. in .env at build time.
+# Builds an APK with the JavaScript bundled in (no Metro needed) and copies it
+# to ~/Downloads. Uses API_URL etc. from .env at build time.
+#   bun run apk        release  -> SmileDoctor-v<version>-<build>.apk
+#   bun run apk:debug  debug    -> SmileDoctor-v<version>-<build>-debug.apk
+#                      (debuggable, full [App] logging incl. every server call)
 set -e
 cd "$(dirname "$0")/.."
 
@@ -14,12 +16,21 @@ VERSION=$(node -p "require('./package.json').version")
 BUILD=$(node -p "require('./package.json').buildNumber")
 API_URL=$(grep -E '^API_URL=' .env | cut -d= -f2-)
 
-echo "Building Smile Doctor v$VERSION ($BUILD) for $API_URL ..."
-(cd android && ./gradlew assembleRelease --console=plain -q)
+MODE="${1:-release}"
+if [ "$MODE" = "debug" ]; then
+  echo "Building Smile Doctor v$VERSION ($BUILD) DEBUG for $API_URL ..."
+  (cd android && LOG_LEVEL=debug ./gradlew assembleDebug -PstandaloneDebug --console=plain -q)
+  BUILT=android/app/build/outputs/apk/debug/app-debug.apk
+  SUFFIX="-debug"
+else
+  echo "Building Smile Doctor v$VERSION ($BUILD) for $API_URL ..."
+  (cd android && ./gradlew assembleRelease --console=plain -q)
+  BUILT=android/app/build/outputs/apk/release/app-release.apk
+  SUFFIX=""
+fi
 
-OUT_DIR="$HOME/Downloads"
-OUT="$OUT_DIR/SmileDoctor-v$VERSION-$BUILD.apk"
-cp android/app/build/outputs/apk/release/app-release.apk "$OUT"
+OUT="$HOME/Downloads/SmileDoctor-v$VERSION-$BUILD$SUFFIX.apk"
+cp "$BUILT" "$OUT"
 echo ""
 echo "Done: $OUT ($(du -h "$OUT" | cut -f1))"
 [ -z "$NO_OPEN" ] && open -R "$OUT" 2>/dev/null || true
