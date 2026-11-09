@@ -3,6 +3,7 @@ import {persist} from 'zustand/middleware';
 import {zustandStorage} from 'src/configs/storage';
 import {DEFAULT_CLINIC_HOURS} from 'src/constants/appointments';
 import {api, type ServerDoctor} from 'src/services/api';
+import {currentSession, noteSave} from './session';
 import type {DoctorProfile, StoredFile} from 'src/types/clinic';
 
 export type {DoctorProfile};
@@ -51,11 +52,19 @@ export const useDoctorStore = create<DoctorState>()(
     (set): DoctorState => ({
       profile: EMPTY_PROFILE,
       saveProfile: async (changes, photo) => {
+        const session = currentSession();
+        const show = (doctor: ServerDoctor) => {
+          if (session === currentSession()) {
+            set({profile: fromServer(doctor)});
+            noteSave();
+          }
+        };
         if (photo) {
-          await api.uploadPhoto(photo);
+          // Shown straight away: the server has already deleted the old
+          // photo, so it must not stay on screen if the next step fails.
+          show((await api.uploadPhoto(photo)).doctor);
         }
-        const {doctor} = await api.updateProfile(changes);
-        set({profile: fromServer(doctor)});
+        show((await api.updateProfile(changes)).doctor);
       },
       alerts: false,
       setAlerts: alerts => set({alerts}),

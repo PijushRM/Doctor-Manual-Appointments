@@ -57,7 +57,9 @@ export const useNewAppointmentDateTimeViewModel = () => {
   const now = new Date();
   const isToday = isSameDay(day, now);
   const booked = bookedMinutes(appointments, day);
-  const inPast = isToday && minutes <= minutesOfDay(now);
+  // A day before today counts too: the screen may stay open past midnight.
+  const inPast =
+    day < startOfDay(now) || (isToday && minutes <= minutesOfDay(now));
   const clash = clashes(booked, minutes);
   // Booking a closed day stays possible (an emergency); it just says so.
   const closed = !workingDays[day.getDay()];

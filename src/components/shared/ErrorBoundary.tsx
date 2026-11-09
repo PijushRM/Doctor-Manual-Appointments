@@ -6,7 +6,11 @@ import {tr} from 'src/i18n';
 import {errorText} from 'src/i18n/strings/errors';
 import {Screen} from './Screen';
 
-type Props = {children: React.ReactNode};
+type Props = {
+  children: React.ReactNode;
+  // Runs before "Try again" redraws, e.g. to leave the screen that crashed.
+  onReset?: () => void;
+};
 type State = {error: Error | null};
 
 // Catches a bug while drawing any screen, so the doctor sees a way back
@@ -27,7 +31,14 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (!this.state.error) {
       return this.props.children;
     }
-    return <CrashScreen onRetry={() => this.setState({error: null})} />;
+    return (
+      <CrashScreen
+        onRetry={() => {
+          this.props.onReset?.();
+          this.setState({error: null});
+        }}
+      />
+    );
   }
 }
 

@@ -45,7 +45,11 @@ const App = () => {
           barStyle={theme.dark ? 'light-content' : 'dark-content'}
           backgroundColor={theme.colors.bg}
         />
-        <ErrorBoundary>
+        <ErrorBoundary
+          // Reopening the screen that crashed would crash again: start over.
+          onReset={() => {
+            navState.current = undefined;
+          }}>
           <NavigationContainer
             key={language}
             theme={navTheme}

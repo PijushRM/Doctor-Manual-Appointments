@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import type {Theme} from 'src/configs/theme';
 import {
@@ -23,8 +23,14 @@ type Props = {minutes: number; onChange: (minutes: number) => void};
 export const TimeWheel = ({minutes, onChange}: Props) => {
   const styles = useStyles(makeStyles);
   const parts = splitTime(minutes);
-  const set = (next: Partial<TimeParts>) =>
-    onChange(joinTime({...parts, ...next}));
+  // Two wheels can settle in the same moment; build each change on the
+  // latest time, not the one from the last draw, so neither is lost.
+  const latest = useRef(minutes);
+  latest.current = minutes;
+  const set = (next: Partial<TimeParts>) => {
+    latest.current = joinTime({...splitTime(latest.current), ...next});
+    onChange(latest.current);
+  };
   const t = tr(appointmentsText);
 
   return (

@@ -99,3 +99,75 @@ describe('clearData', () => {
     expect(useSyncStore.getState().status).toBe('idle');
   });
 });
+
+// A server whose /api/sync answer is held until `release` is called.
+const slowSync = (payload: unknown) => {
+  let release!: () => void;
+  const gate = new Promise<void>(r => (release = r));
+  globalThis.fetch = (async (url: string, init: RequestInit = {}) => {
+    const path = url.replace(/^https?:\/\/[^/]+/, '');
+    if (path === '/api/sync') {
+      await gate;
+      return Response.json(payload);
+    }
+    // A booking, answered at once.
+    const body = JSON.parse(String(init.body));
+    return Response.json(
+      {
+        data: {
+          appointment: {
+            id: oid(9),
+            patientId: oid(1),
+            startsAt: body.startsAt,
+            createdAt: '',
+          },
+          patient: patient(oid(1)),
+          patientCreated: false,
+        },
+        warnings: {overlaps: [], inPast: false},
+      },
+      {status: 201},
+    );
+  }) as unknown as typeof fetch;
+  return release;
+};
+
+describe('late answers', () => {
+  it('ignores a sync that lands after logout', async () => {
+    const release = slowSync({...emptySync(), patients: [patient(oid(1))]});
+    const sync = syncAll();
+    clearData(); // logged out while it was on its way
+    release();
+    await sync;
+    expect(useClinicStore.getState().patients).toEqual([]);
+    expect(useSyncStore.getState().status).toBe('idle');
+  });
+
+  it('keeps an appointment saved while an older sync was on its way', async () => {
+    useSyncStore.setState({status: 'ready'});
+    const release = slowSync(emptySync()); // copy taken before the booking
+    const sync = syncAll();
+    const {id} = await useClinicStore
+      .getState()
+      .addAppointment(
+        {name: 'Amit Das', age: 34, phone: '9830012345', email: ''},
+        new Date(2025, 9, 27, 10, 0),
+      );
+    release();
+    await sync;
+    expect(useClinicStore.getState().appointments.map(a => a.id)).toEqual([id]);
+  });
+
+  it('drops a booking answer that lands after logout', async () => {
+    slowSync(emptySync());
+    const booking = useClinicStore
+      .getState()
+      .addAppointment(
+        {name: 'Amit Das', age: 34, phone: '9830012345', email: ''},
+        new Date(2025, 9, 27, 10, 0),
+      );
+    clearData();
+    await booking;
+    expect(useClinicStore.getState().appointments).toEqual([]);
+  });
+});

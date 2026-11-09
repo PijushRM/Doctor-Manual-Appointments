@@ -126,7 +126,12 @@ export const usePatientProfileViewModel = () => {
       sms: e.appointmentId
         ? {
             status: sms[e.appointmentId] ?? ('idle' as const),
-            send: () => confirmSms(e.appointmentId!, e.detail ?? ''),
+            send: () => {
+              const a = appointments.find(x => x.id === e.appointmentId);
+              if (a) {
+                confirmSms(a.id, appointmentDayTime(new Date(a.startsAt)));
+              }
+            },
           }
         : undefined,
     })),

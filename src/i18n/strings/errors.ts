@@ -15,6 +15,8 @@ export const errorText = defineStrings({
   forbidden: 'You don’t have permission to do this.',
   notFound: 'This was not found. It may have been deleted.',
   tooLargeForServer: 'This file is too large for the server.',
+  unsupportedFile:
+    'This kind of file can’t be added. Choose a PDF, JPG or PNG.',
   tooManyAttempts: 'Too many attempts. Please wait a minute and try again.',
   checkDetails: 'Please check the details and try again.',
   crashTitle: 'Something went wrong',
@@ -35,6 +37,7 @@ export const errorText = defineStrings({
   forbidden: 'এটি করার অনুমতি আপনার নেই।',
   notFound: 'এটি পাওয়া যায়নি। হয়তো মুছে ফেলা হয়েছে।',
   tooLargeForServer: 'ফাইলটি সার্ভারের জন্য খুব বড়।',
+  unsupportedFile: 'এই ধরনের ফাইল যোগ করা যায় না। PDF, JPG বা PNG বেছে নিন।',
   tooManyAttempts:
     'অনেকবার চেষ্টা হয়েছে। এক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।',
   checkDetails: 'তথ্যগুলো দেখে আবার চেষ্টা করুন।',

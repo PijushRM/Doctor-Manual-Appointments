@@ -58,6 +58,8 @@ const entryEvent = (entry: RecordEntry): ActivityEvent => {
 // patient reads "Added by you". Once an appointment's time has passed it also
 // counts as a visit.
 // ponytail: no attendance tracking, so a no-show still reads as a visit.
+const ADDED_WITH_BOOKING_MS = 10_000;
+
 export const patientEvents = (
   patient: Patient,
   appointments: Appointment[],
@@ -66,10 +68,23 @@ export const patientEvents = (
 ): ActivityEvent[] => {
   const t = tr(patientsText);
   const events: ActivityEvent[] = entries.map(entryEvent);
+  // The booking that added the patient: the server creates the patient and
+  // then the appointment, a moment apart, so match within a few seconds.
+  const patientAt = new Date(patient.createdAt).getTime();
+  const addingBooking = appointments
+    .filter(
+      a =>
+        Math.abs(new Date(a.createdAt).getTime() - patientAt) <=
+        ADDED_WITH_BOOKING_MS,
+    )
+    .sort(
+      (x, y) =>
+        new Date(x.createdAt).getTime() - new Date(y.createdAt).getTime(),
+    )[0]?.id;
   let addedWithBooking = false;
   for (const a of appointments) {
     const startsAt = new Date(a.startsAt);
-    const isFirst = a.createdAt === patient.createdAt;
+    const isFirst = a.id === addingBooking;
     addedWithBooking ||= isFirst;
     const title = isFirst ? t.addedByYou : t.appointmentBooked;
     events.push({

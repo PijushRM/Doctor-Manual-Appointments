@@ -22,7 +22,17 @@ export const requestAlertPermission = async () =>
 // Replaces every scheduled reminder with `reminders` (empty = alerts off).
 // ponytail: reschedules all on each change; fine for a clinic's upcoming list,
 // diff by id if it ever runs into Android's ~500-alarm limit.
-export const syncReminders = async (reminders: Reminder[]) => {
+// Calls run one after another: two overlapping runs could otherwise mix (one
+// cancelling while the other is still scheduling), leaving reminders on after
+// alerts were switched off. The last call always decides what is scheduled.
+let queue: Promise<void> = Promise.resolve();
+export const syncReminders = (reminders: Reminder[]) => {
+  const run = queue.catch(() => {}).then(() => replaceReminders(reminders));
+  queue = run;
+  return run;
+};
+
+const replaceReminders = async (reminders: Reminder[]) => {
   await notifee.cancelTriggerNotifications();
   if (!reminders.length) {
     return;

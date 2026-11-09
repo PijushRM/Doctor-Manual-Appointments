@@ -53,6 +53,25 @@ describe('patientEvents', () => {
     ]);
   });
 
+  it('shows one "Added by you" row when the server created patient and booking a moment apart', () => {
+    const patient = {...amit, createdAt: '2025-10-20T04:00:00.000Z'};
+    const events = patientEvents(
+      patient,
+      [
+        {
+          id: 'a1',
+          patientId: patient.id,
+          startsAt: iso(27, 9, 30),
+          createdAt: '2025-10-20T04:00:00.120Z', // 120 ms after the patient
+        },
+      ],
+      [],
+      now,
+    );
+    expect(events.map(e => e.kind)).toEqual(['added']);
+    expect(events[0].detail).toStartWith('Booked for');
+  });
+
   it('offers SMS only on bookings whose visit is still ahead', () => {
     const events = patientEvents(
       amit,

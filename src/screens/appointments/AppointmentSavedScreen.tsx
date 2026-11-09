@@ -100,7 +100,7 @@ export const AppointmentSavedScreen = () => {
                     busy: c.status === 'sending',
                     disabled: off,
                   }}
-                  disabled={off || c.status === 'sending'}
+                  disabled={off || c.status !== 'idle'}
                   onPress={c.send}
                   style={({pressed}) => [
                     styles.channel,

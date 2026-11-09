@@ -24,18 +24,23 @@ export const NewAppointmentDateTimeScreen = () => {
   const datesRef = useRef<FlatList<(typeof vm.dates)[number]>>(null);
   const selectedDate = vm.dates.findIndex(d => d.selected);
 
-  // Keep the chosen day in view: on open, and when picked on the calendar.
-  const firstScroll = useRef(true);
-  useEffect(() => {
-    if (selectedDate < 0) {
-      return;
+  // Keep the chosen day in view: centred once the list knows its width (on
+  // open), then slid to whenever it changes (e.g. picked on the calendar).
+  const laidOut = useRef(false);
+  const centreSelected = (animated: boolean) => {
+    if (selectedDate >= 0) {
+      datesRef.current?.scrollToIndex({
+        index: selectedDate,
+        viewPosition: 0.5,
+        animated,
+      });
     }
-    datesRef.current?.scrollToIndex({
-      index: selectedDate,
-      viewPosition: 0.5,
-      animated: !firstScroll.current,
-    });
-    firstScroll.current = false;
+  };
+  useEffect(() => {
+    if (laidOut.current) {
+      centreSelected(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   return (
@@ -74,6 +79,12 @@ export const NewAppointmentDateTimeScreen = () => {
         <FlatList
           ref={datesRef}
           horizontal
+          onLayout={() => {
+            if (!laidOut.current) {
+              laidOut.current = true;
+              centreSelected(false);
+            }
+          }}
           data={vm.dates}
           keyExtractor={date => date.key}
           getItemLayout={(_, index) => ({

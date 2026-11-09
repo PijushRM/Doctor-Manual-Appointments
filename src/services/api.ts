@@ -133,6 +133,9 @@ export const messageFor = (
   if (status === 408 || status === 504) {
     return t.timeout;
   }
+  if (status === 415) {
+    return t.unsupportedFile;
+  }
   if (status === 413) {
     return t.tooLargeForServer;
   }

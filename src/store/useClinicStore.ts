@@ -1,5 +1,6 @@
 import {create} from 'zustand';
 import {api, toEntry} from 'src/services/api';
+import {currentSession, noteSave} from './session';
 import type {
   Appointment,
   NewPatient,
@@ -36,17 +37,26 @@ export const useClinicStore = create<ClinicState>()(
     appointments: [],
     entries: [],
     addAppointment: async (patient, startsAt) => {
+      const session = currentSession();
       const {data, warnings} = await api.bookAppointment(startsAt, {patient});
-      set(s => ({
-        patients: upsert(s.patients, data.patient),
-        appointments: upsert(s.appointments, data.appointment),
-      }));
+      // Logged out while it was saving: it's on the server, not for this screen.
+      if (session === currentSession()) {
+        set(s => ({
+          patients: upsert(s.patients, data.patient),
+          appointments: upsert(s.appointments, data.appointment),
+        }));
+        noteSave();
+      }
       return {id: data.appointment.id, warnings};
     },
     addEntry: async entry => {
+      const session = currentSession();
       const {data} = await api.addRecord(entry.patientId, entry);
       const saved = toEntry(data);
-      set(s => ({entries: upsert(s.entries, saved)}));
+      if (session === currentSession()) {
+        set(s => ({entries: upsert(s.entries, saved)}));
+        noteSave();
+      }
       return saved.id;
     },
   }),

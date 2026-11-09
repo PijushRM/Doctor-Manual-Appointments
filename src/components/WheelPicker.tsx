@@ -137,10 +137,8 @@ export const WheelPicker = ({items, index, onChange, label, loop}: Props) => {
       ? (committed.current + by + count) % count
       : Math.min(Math.max(committed.current + by, 0), count - 1);
     committed.current = next;
-    scrollToRow(
-      centredRow.current + (next - (centredRow.current % count)),
-      true,
-    );
+    // A looping wheel just moves one row; a plain one moves to the clamped row.
+    scrollToRow(loop ? centredRow.current + by : next, true);
     onChange(next);
   };
 
