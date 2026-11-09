@@ -15,6 +15,7 @@ import {requestAlertPermission} from 'src/services/notificationService';
 import {useAuthStore} from 'src/store/useAuthStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {showError} from 'src/utils/showError';
+import {logger} from 'src/utils/logger';
 
 export const useSettingsViewModel = () => {
   const navigation =
@@ -30,10 +31,12 @@ export const useSettingsViewModel = () => {
   const toggleAlerts = async () => {
     if (alerts) {
       setAlerts(false);
+      logger.info('settings', 'Appointment alerts off');
       return;
     }
     if (await requestAlertPermission()) {
       setAlerts(true);
+      logger.info('settings', 'Appointment alerts on');
       return;
     }
     Alert.alert(
@@ -70,6 +73,7 @@ export const useSettingsViewModel = () => {
       pick: () => {
         setLanguageOpen(false);
         // The whole app redraws in the new language, staying on this screen.
+        logger.info('settings', `Language → ${l.key}`);
         setLanguage(l.key as Language);
       },
     })),

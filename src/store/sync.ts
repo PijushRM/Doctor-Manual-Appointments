@@ -13,6 +13,7 @@ import {
 import {useClinicStore} from 'src/store/useClinicStore';
 import {errorMessage} from 'src/utils/errors';
 import {currentSession, endSession, savesSoFar} from './session';
+import {logger} from 'src/utils/logger';
 
 // Nothing is saved on the phone: every screen shows what the server last sent,
 // held in memory only. `status` covers the first load after launch or login,
@@ -72,14 +73,26 @@ export const syncAll = () => {
       useSyncStore.setState({status: 'loading', error: ''});
     }
     try {
+      logger.debug('sync', first ? 'Loading clinic' : 'Refreshing');
       const payload = await api.sync();
       // Logged out (or another doctor logged in) meanwhile: not theirs.
       if (session !== currentSession()) {
+        logger.debug('sync', 'Ignored: arrived after logout');
         return;
       }
-      applySync(payload, saves !== savesSoFar());
+      const keepNewer = saves !== savesSoFar();
+      applySync(payload, keepNewer);
       useSyncStore.setState({status: 'ready'});
+      logger.info(
+        'sync',
+        `Loaded ${payload.patients.length} patients, ${
+          payload.appointments.length
+        } appointments, ${payload.entries.length} records${
+          keepNewer ? ' (kept newer saves)' : ''
+        }`,
+      );
     } catch (e) {
+      logger.warn('sync', first ? 'First load failed' : 'Refresh failed', e);
       if (first && session === currentSession()) {
         useSyncStore.setState({status: 'error', error: errorMessage(e)});
       }

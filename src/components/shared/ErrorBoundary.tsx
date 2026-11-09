@@ -5,6 +5,7 @@ import {Button} from './Button';
 import {tr} from 'src/i18n';
 import {errorText} from 'src/i18n/strings/errors';
 import {Screen} from './Screen';
+import {logger} from 'src/utils/logger';
 
 type Props = {
   children: React.ReactNode;
@@ -24,7 +25,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[Screen crashed]', error, info.componentStack);
+    logger.error('error', 'Screen crashed', {
+      error,
+      stack: info.componentStack,
+    });
   }
 
   render() {

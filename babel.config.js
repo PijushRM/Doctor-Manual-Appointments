@@ -9,7 +9,7 @@ module.exports = {
         path: '.env',
         // Only these names can be imported. A missing one is undefined:
         // src/configs checks API_URL and gives MAX_UPLOAD_MB a default.
-        allowlist: ['API_URL', 'MAX_UPLOAD_MB'],
+        allowlist: ['API_URL', 'MAX_UPLOAD_MB', 'LOG_LEVEL'],
         allowUndefined: true,
       },
     ],

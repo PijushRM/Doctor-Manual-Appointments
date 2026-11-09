@@ -15,6 +15,7 @@ import {useTheme} from 'src/hooks/useTheme';
 import {useLanguage} from 'src/i18n';
 import {RootNavigator} from 'src/navigation/RootNavigator';
 import {installCrashHandler} from 'src/services/crashHandler';
+import {logger} from 'src/utils/logger';
 
 installCrashHandler();
 
@@ -55,7 +56,12 @@ const App = () => {
             theme={navTheme}
             initialState={navState.current}
             onStateChange={state => {
+              const from = activeRoute(navState.current);
               navState.current = state;
+              const to = activeRoute(state);
+              if (to && to !== from) {
+                logger.info('nav', `Opened ${to}`);
+              }
             }}>
             <RootNavigator />
           </NavigationContainer>
@@ -63,6 +69,13 @@ const App = () => {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
+};
+
+// The screen on top, however deeply nested (tabs inside stacks).
+const activeRoute = (state?: NavigationState): string | undefined => {
+  const route = state?.routes[state.index];
+  const child = route?.state as NavigationState | undefined;
+  return child ? activeRoute(child) ?? route?.name : route?.name;
 };
 
 const styles = StyleSheet.create({root: {flex: 1}});

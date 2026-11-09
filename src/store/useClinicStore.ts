@@ -7,6 +7,7 @@ import type {
   Patient,
   RecordEntry,
 } from 'src/types/clinic';
+import {logger} from 'src/utils/logger';
 
 export type BookingWarnings = {overlaps: string[]; inPast: boolean};
 
@@ -46,6 +47,11 @@ export const useClinicStore = create<ClinicState>()(
           appointments: upsert(s.appointments, data.appointment),
         }));
         noteSave();
+        logger.info('save', `Appointment booked ${data.appointment.id}`, {
+          patient: data.patient.id,
+          newPatient: data.patientCreated,
+          overlaps: warnings.overlaps.length,
+        });
       }
       return {id: data.appointment.id, warnings};
     },
@@ -56,6 +62,11 @@ export const useClinicStore = create<ClinicState>()(
       if (session === currentSession()) {
         set(s => ({entries: upsert(s.entries, saved)}));
         noteSave();
+        logger.info('save', `Record added ${saved.id}`, {
+          patient: saved.patientId,
+          type: saved.docType ?? 'note',
+          file: !!saved.file,
+        });
       }
       return saved.id;
     },

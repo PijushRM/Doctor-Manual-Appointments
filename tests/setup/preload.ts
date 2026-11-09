@@ -36,6 +36,7 @@ mock.module('react-native-mmkv-storage', () => ({MMKVLoader}));
 mock.module('@env', () => ({
   API_URL: 'http://localhost:3000',
   MAX_UPLOAD_MB: undefined,
+  LOG_LEVEL: 'off', // keep test output clean
 }));
 
 // React Native's build flag.

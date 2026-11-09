@@ -2,6 +2,7 @@ import {API_TIMEOUT_MS, API_URL, UPLOAD_TIMEOUT_MS} from 'src/configs/api';
 import {tr} from 'src/i18n';
 import {errorText} from 'src/i18n/strings/errors';
 import {AppError} from 'src/utils/errors';
+import {logFailure, logRequest, logResponse} from './networkLog';
 import type {
   Appointment,
   DocType,
@@ -74,12 +75,21 @@ export async function request<T>(path: string, options: Options = {}) {
     signal: controller.signal,
   } as RequestInit;
   let response: Response;
+  const started = Date.now();
+  logRequest(method, path, json, form);
   try {
     response = await fetch(`${API_URL}${path}`, init);
   } catch {
     // Aborted = our own timeout; anything else = no connection.
     const t = tr(errorText);
-    throw new ApiError(0, controller.signal.aborted ? t.timeout : t.offline);
+    const timedOut = controller.signal.aborted;
+    logFailure(
+      method,
+      path,
+      Date.now() - started,
+      timedOut ? 'timed out' : 'no connection',
+    );
+    throw new ApiError(0, timedOut ? t.timeout : t.offline);
   } finally {
     clearTimeout(timer);
   }
@@ -93,6 +103,15 @@ export async function request<T>(path: string, options: Options = {}) {
     error?: string;
     details?: FieldErrors;
   } | null;
+  logResponse(
+    method,
+    path,
+    response.status,
+    Date.now() - started,
+    isJson
+      ? body
+      : `[${response.headers.get('content-type') ?? 'no content type'}]`,
+  );
   if (!response.ok) {
     if (response.status === 401 && auth) {
       onUnauthorized();

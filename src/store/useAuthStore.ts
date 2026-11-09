@@ -10,6 +10,7 @@ import {
 } from 'src/features/auth/credentials';
 import {ApiError, api, configureApi} from 'src/services/api';
 import {applyDoctor, clearData, syncAll} from 'src/store/sync';
+import {logger} from 'src/utils/logger';
 
 type AuthState = {
   token: string | null;
@@ -55,11 +56,20 @@ export const useAuthStore = create<AuthState>()(
             identifier: session.doctor.identifier,
             isLoggedIn: true,
           });
+          logger.info(
+            'auth',
+            mode === 'register' ? 'Account created' : 'Logged in',
+          );
           applyDoctor(session.doctor);
           // A failure here shows the "Couldn't load" screen with Retry.
           await syncAll().catch(() => {});
           return null;
         } catch (e) {
+          logger.warn(
+            'auth',
+            'Login failed',
+            e instanceof ApiError ? e.status : e,
+          );
           if (e instanceof ApiError && e.status === 401) {
             return 'mismatch';
           }
@@ -74,6 +84,7 @@ export const useAuthStore = create<AuthState>()(
       },
       // Patient data lives on the server only; drop what is in memory.
       logOut: () => {
+        logger.info('auth', 'Logged out');
         set({token: null, isLoggedIn: false});
         clearData();
       },

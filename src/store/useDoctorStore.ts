@@ -5,6 +5,7 @@ import {DEFAULT_CLINIC_HOURS} from 'src/constants/appointments';
 import {api, type ServerDoctor} from 'src/services/api';
 import {currentSession, noteSave} from './session';
 import type {DoctorProfile, StoredFile} from 'src/types/clinic';
+import {logger} from 'src/utils/logger';
 
 export type {DoctorProfile};
 
@@ -65,6 +66,10 @@ export const useDoctorStore = create<DoctorState>()(
           show((await api.uploadPhoto(photo)).doctor);
         }
         show((await api.updateProfile(changes)).doctor);
+        logger.info('save', 'Profile saved', {
+          fields: Object.keys(changes),
+          photo: !!photo,
+        });
       },
       alerts: false,
       setAlerts: alerts => set({alerts}),

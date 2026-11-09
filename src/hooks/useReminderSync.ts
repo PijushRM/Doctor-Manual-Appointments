@@ -6,6 +6,7 @@ import {useAuthStore} from 'src/store/useAuthStore';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 import {useSyncStore} from 'src/store/sync';
+import {logger} from 'src/utils/logger';
 
 // Keeps the phone's scheduled reminders in step with the appointments and the
 // Settings switch. Runs after each load from the server, booking or toggle.
@@ -31,7 +32,7 @@ export const useReminderSync = () => {
         : [];
     // Runs in the background, so there's no one to show an alert to; logged.
     syncReminders(reminders).catch(e =>
-      console.warn('[Appointment reminders]', e),
+      logger.warn('reminders', 'Couldn’t update reminders', e),
     );
   }, [isLoggedIn, loaded, alerts, appointments, patients, language]);
 };

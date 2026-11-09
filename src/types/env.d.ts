@@ -3,4 +3,5 @@
 declare module '@env' {
   export const API_URL: string | undefined;
   export const MAX_UPLOAD_MB: string | undefined;
+  export const LOG_LEVEL: string | undefined;
 }
