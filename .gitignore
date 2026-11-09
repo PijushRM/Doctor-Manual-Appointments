@@ -78,6 +78,3 @@ yarn-error.log
 .env
 .env.*
 !.env.example
-
-# Built APKs (bun run apk)
-/apk/
