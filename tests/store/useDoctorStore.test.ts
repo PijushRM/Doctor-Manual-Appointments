@@ -1,41 +1,60 @@
 import {describe, expect, it} from 'bun:test';
 import {useAuthStore} from 'src/store/useAuthStore';
-import {useDoctorStore} from 'src/store/useDoctorStore';
+import {EMPTY_PROFILE, useDoctorStore} from 'src/store/useDoctorStore';
 import {mmkvInstances} from '../setup/preload';
 import {fakeServer, serverDoctor} from '../setup/fakeServer';
 
 describe('useDoctorStore persistence', () => {
-  it('restores saved settings and fills new profile fields with defaults', async () => {
-    // As saved by an older build: a partial profile, alerts switched on.
-    mmkvInstances.get('default')!.set(
-      'doctor',
-      JSON.stringify({
-        state: {alerts: true, profile: {name: 'Dr. X'}},
-        version: 0,
-      }),
+  it('saves only the alerts switch on the phone, never the profile', async () => {
+    useDoctorStore.setState(s => ({
+      alerts: true,
+      profile: {...s.profile, name: 'Dr. X'},
+    }));
+    const saved = JSON.parse(
+      mmkvInstances.get('default')!.get('doctor-settings')!,
     );
-    await useDoctorStore.persist.rehydrate();
+    expect(saved.state).toEqual({alerts: true});
 
-    const {alerts, profile} = useDoctorStore.getState();
-    expect(alerts).toBe(true);
-    expect(profile.name).toBe('Dr. X');
-    expect(profile.opens).toBe(9 * 60); // default for a field the old save lacked
-    expect(profile.photoUrl).toBe('');
+    // After a restart: alerts come back, the profile waits for the server.
+    useDoctorStore.setState({profile: EMPTY_PROFILE});
+    mmkvInstances
+      .get('default')!
+      .set(
+        'doctor-settings',
+        JSON.stringify({state: {alerts: false}, version: 0}),
+      );
+    await useDoctorStore.persist.rehydrate();
+    expect(useDoctorStore.getState().alerts).toBe(false);
+    expect(useDoctorStore.getState().profile).toEqual(EMPTY_PROFILE);
   });
 });
 
 describe('saveProfile', () => {
-  it('uploads the photo first, then the fields, and caches the result', async () => {
+  it('uploads the photo first, then the fields, and shows the server copy', async () => {
     useAuthStore.setState({token: 'tok', isLoggedIn: true});
     const calls = fakeServer(({path, json}) =>
       path === '/api/doctor/photo'
         ? {json: {doctor: serverDoctor({photoUrl: '/api/files/p1'})}}
-        : {json: {doctor: serverDoctor({photoUrl: '/api/files/p1', ...(json as object)})}},
+        : {
+            json: {
+              doctor: serverDoctor({
+                photoUrl: '/api/files/p1',
+                ...(json as object),
+              }),
+            },
+          },
     );
-    await useDoctorStore.getState().saveProfile(
-      {name: 'Dr. Y', clinicName: 'Smile'},
-      {uri: 'file:///me.jpg', name: 'me.jpg', size: 10, mimeType: 'image/jpeg'},
-    );
+    await useDoctorStore
+      .getState()
+      .saveProfile(
+        {name: 'Dr. Y', clinicName: 'Smile'},
+        {
+          uri: 'file:///me.jpg',
+          name: 'me.jpg',
+          size: 10,
+          mimeType: 'image/jpeg',
+        },
+      );
     expect(calls.map(c => [c.method, c.path])).toEqual([
       ['PUT', '/api/doctor/photo'],
       ['PATCH', '/api/doctor/profile'],
@@ -44,7 +63,6 @@ describe('saveProfile', () => {
     expect(useDoctorStore.getState().profile).toMatchObject({
       name: 'Dr. Y',
       clinicName: 'Smile',
-      photoUri: 'file:///me.jpg',
       photoUrl: '/api/files/p1',
     });
   });

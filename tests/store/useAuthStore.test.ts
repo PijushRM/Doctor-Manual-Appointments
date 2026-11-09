@@ -3,6 +3,7 @@ import {api} from 'src/services/api';
 import {useAuthStore} from 'src/store/useAuthStore';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {useDoctorStore} from 'src/store/useDoctorStore';
+import {clearData, useSyncStore} from 'src/store/sync';
 import {mmkvInstances} from '../setup/preload';
 import {emptySync, fakeServer, oid, serverDoctor} from '../setup/fakeServer';
 
@@ -15,7 +16,7 @@ const session = (doctor = serverDoctor()) => ({
 
 const reset = () => {
   useAuthStore.setState({token: null, identifier: null, isLoggedIn: false});
-  useClinicStore.setState({patients: [], appointments: [], entries: []});
+  clearData();
 };
 
 describe('logIn', () => {
@@ -95,7 +96,7 @@ describe('logIn', () => {
     expect(useAuthStore.getState().isLoggedIn).toBe(true);
   });
 
-  it('drops the previous doctor’s cache when someone else logs in', async () => {
+  it('drops the previous doctor’s data when someone else logs in', async () => {
     useAuthStore.setState({identifier: 'other@clinic.in'});
     useClinicStore.setState({
       patients: [
@@ -109,13 +110,8 @@ describe('logIn', () => {
         },
       ],
     });
-    // The server rejects uploads, so only the cache clear can remove it.
     fakeServer(({path}) =>
-      path === '/api/sync'
-        ? {json: emptySync()}
-        : path === '/api/patients'
-        ? 'offline'
-        : session(),
+      path === '/api/sync' ? {json: emptySync()} : session(),
     );
     await logIn('dr@clinic.in', 'password123');
     expect(useClinicStore.getState().patients).toEqual([]);
@@ -157,7 +153,10 @@ describe('logOut and expired sessions', () => {
 
   it('logs out when the server says the token is no longer valid', async () => {
     useAuthStore.setState({token: 'old', isLoggedIn: true});
-    fakeServer(() => ({status: 401, json: {error: 'Invalid or expired token'}}));
+    fakeServer(() => ({
+      status: 401,
+      json: {error: 'Invalid or expired token'},
+    }));
     await expect(api.sync()).rejects.toThrow('Invalid or expired token');
     expect(useAuthStore.getState().isLoggedIn).toBe(false);
   });
@@ -183,7 +182,10 @@ describe('changePassword', () => {
   it('reports a wrong current password from the server', async () => {
     fakeServer(() => ({
       status: 400,
-      json: {error: 'x', details: {current: 'Your current password is incorrect.'}},
+      json: {
+        error: 'x',
+        details: {current: 'Your current password is incorrect.'},
+      },
     }));
     expect(await changePassword('wrong1', 'newpass1', 'newpass1')).toBe(
       'wrongCurrent',
@@ -193,7 +195,9 @@ describe('changePassword', () => {
 
   it('stores the new token on success', async () => {
     const calls = fakeServer(() => ({json: {ok: true, token: 'tok-2'}}));
-    expect(await changePassword('password123', 'newpass1', 'newpass1')).toBeNull();
+    expect(
+      await changePassword('password123', 'newpass1', 'newpass1'),
+    ).toBeNull();
     expect(calls[0]).toMatchObject({
       path: '/api/auth/change-password',
       json: {current: 'password123', next: 'newpass1', confirm: 'newpass1'},
@@ -210,10 +214,10 @@ describe('changePassword', () => {
   });
 });
 
-describe('first login after upgrading', () => {
+describe('first load after login', () => {
   beforeEach(reset);
 
-  it('keeps and uploads patients saved on this phone before the server', async () => {
+  it('shows only the server data and uploads nothing from the phone', async () => {
     useClinicStore.setState({
       patients: [
         {
@@ -226,50 +230,23 @@ describe('first login after upgrading', () => {
         },
       ],
     });
+    useDoctorStore.setState(s => ({profile: {...s.profile, name: 'Old Name'}}));
     const calls = fakeServer(({path}) =>
-      path === '/api/patients'
-        ? 'offline'
-        : path === '/api/sync'
-        ? {json: emptySync()}
-        : session(),
+      path === '/api/sync'
+        ? {json: emptySync(serverDoctor({name: 'Dr. Subhas Middya'}))}
+        : session(serverDoctor({name: 'Dr. Subhas Middya'})),
     );
     await logIn('dr@clinic.in', 'password123');
-    expect(calls.some(c => c.path === '/api/patients')).toBe(true);
-    // Upload failed (offline): the patient stays for the next sync.
-    expect(useClinicStore.getState().patients.map(p => p.id)).toEqual([
-      'local-1',
-    ]);
-    // Logging out keeps it too.
-    logOut();
-    expect(useClinicStore.getState().patients.map(p => p.id)).toEqual([
-      'local-1',
-    ]);
+    expect(calls.map(c => c.path)).toEqual(['/api/auth/login', '/api/sync']);
+    expect(useClinicStore.getState().patients).toEqual([]);
+    expect(useDoctorStore.getState().profile.name).toBe('Dr. Subhas Middya');
+    expect(useSyncStore.getState().status).toBe('ready');
   });
 
-  it('moves a profile filled in on this phone to an empty server profile', async () => {
-    useDoctorStore.setState(s => ({
-      profile: {...s.profile, name: 'Dr. Subhas Middya', clinicName: 'Smile'},
-    }));
-    const calls = fakeServer(({path, json}) => {
-      if (path === '/api/doctor/profile') {
-        return {json: {doctor: serverDoctor(json as Record<string, unknown>)}};
-      }
-      if (path === '/api/sync') {
-        return {
-          json: emptySync(
-            serverDoctor({name: 'Dr. Subhas Middya', clinicName: 'Smile'}),
-          ),
-        };
-      }
-      return session();
-    });
-    await logIn('dr@clinic.in', 'password123');
-    const patch = calls.find(c => c.path === '/api/doctor/profile');
-    expect(patch?.json).toMatchObject({
-      name: 'Dr. Subhas Middya',
-      clinicName: 'Smile',
-    });
-    expect(patch?.json).not.toHaveProperty('photoUrl');
-    expect(useDoctorStore.getState().profile.name).toBe('Dr. Subhas Middya');
+  it('waits on the Retry screen when the first load fails', async () => {
+    fakeServer(({path}) => (path === '/api/sync' ? 'offline' : session()));
+    expect(await logIn('dr@clinic.in', 'password123')).toBeNull();
+    expect(useAuthStore.getState().isLoggedIn).toBe(true);
+    expect(useSyncStore.getState().status).toBe('error');
   });
 });

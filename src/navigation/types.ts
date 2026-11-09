@@ -40,6 +40,7 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
+  LoadingData: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
   AppointmentSaved: {appointmentId: string};
 };

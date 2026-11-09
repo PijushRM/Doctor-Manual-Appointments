@@ -3,6 +3,10 @@ import {createJSONStorage, type StateStorage} from 'zustand/middleware';
 
 export const MMKV = new MMKVLoader().initialize();
 
+// Patients, appointments, records and the profile come from the server and
+// are never saved on the phone. Older versions cached them under these keys.
+['clinic', 'doctor'].forEach(key => MMKV.removeItem(key));
+
 // Encrypted instance for credentials; the key lives in the Android Keystore.
 const SECURE_MMKV = new MMKVLoader()
   .withInstanceID('smile-doctor-secure')

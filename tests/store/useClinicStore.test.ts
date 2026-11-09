@@ -10,7 +10,11 @@ const ankita = {
   email: '',
 };
 const startsAt = new Date(2025, 9, 25, 10, 30);
-const serverPatient = {...ankita, id: oid(1), createdAt: '2025-10-24T03:30:00.000Z'};
+const serverPatient = {
+  ...ankita,
+  id: oid(1),
+  createdAt: '2025-10-24T03:30:00.000Z',
+};
 
 const booking = (n: number, overlaps: string[] = []) => ({
   status: 201,
@@ -95,7 +99,12 @@ describe('addEntry', () => {
     }));
     const id = await useClinicStore
       .getState()
-      .addEntry({patientId: oid(1), docType: null, file: null, note: 'Crown prep'});
+      .addEntry({
+        patientId: oid(1),
+        docType: null,
+        file: null,
+        note: 'Crown prep',
+      });
 
     expect(calls[0]).toMatchObject({
       method: 'POST',
@@ -114,7 +123,7 @@ describe('addEntry', () => {
     ]);
   });
 
-  it('keeps the local copy of an uploaded file', async () => {
+  it('keeps no copy of an uploaded file on the phone', async () => {
     fakeServer(() => ({
       status: 201,
       json: {
@@ -145,8 +154,9 @@ describe('addEntry', () => {
       },
       note: '',
     });
+    // It opens from the server by fileId.
     expect(useClinicStore.getState().entries[0].file).toEqual({
-      uri: 'file:///docs/Rx.pdf',
+      uri: '',
       fileId: oid(50),
       name: 'Rx.pdf',
       size: 2048,

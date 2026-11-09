@@ -51,6 +51,5 @@ export type DoctorProfile = {
   opens: number; // minutes from midnight
   closes: number;
   workingDays: boolean[]; // 7 entries, Sunday first (Date#getDay order)
-  photoUri: string; // local copy, if this phone has one
   photoUrl: string; // server path, e.g. /api/files/<id>
 };

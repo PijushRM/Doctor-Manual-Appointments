@@ -15,7 +15,7 @@ import {
 import type {ProfileStackParamList} from 'src/navigation/types';
 import {OFFLINE_MESSAGE} from 'src/features/auth/credentials';
 import {ApiError} from 'src/services/api';
-import {keepFile} from 'src/services/fileService';
+import {toUpload} from 'src/services/fileService';
 import {useDoctorStore} from 'src/store/useDoctorStore';
 
 // Shown Monday first; stored Sunday first (Date#getDay order).
@@ -69,11 +69,10 @@ export const useEditProfileClinicViewModel = () => {
     setSaving(true);
     try {
       const {photo, ...personal} = details ?? {};
-      // Kept on the phone too, so the profile shows it without downloading.
-      const stored = photo
-        ? await keepFile(photo, `ProfilePhoto_${Date.now()}.jpg`)
+      const upload = photo
+        ? toUpload(photo, `ProfilePhoto_${Date.now()}.jpg`)
         : undefined;
-      await saveProfile({...values, ...personal}, stored);
+      await saveProfile({...values, ...personal}, upload);
       // From part 1 → back to Profile; from Settings › Availability → Settings.
       if (details) {
         navigation.navigate('Profile');

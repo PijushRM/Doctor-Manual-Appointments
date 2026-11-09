@@ -59,14 +59,14 @@ export async function request<T>(path: string, options: Options = {}) {
   );
   // Typed loosely: React Native's and Bun's (tests) fetch types disagree.
   const init = {
-      method,
-      headers: {
-        Accept: 'application/json',
-        ...(json !== undefined && {'Content-Type': 'application/json'}),
-        ...(auth ? authHeader() : {}),
-      },
-      body: form ?? (json !== undefined ? JSON.stringify(json) : undefined),
-      signal: controller.signal,
+    method,
+    headers: {
+      Accept: 'application/json',
+      ...(json !== undefined && {'Content-Type': 'application/json'}),
+      ...(auth ? authHeader() : {}),
+    },
+    body: form ?? (json !== undefined ? JSON.stringify(json) : undefined),
+    signal: controller.signal,
   } as RequestInit;
   let response: Response;
   try {
@@ -126,18 +126,19 @@ export type SyncPayload = {
   entries: ServerEntry[];
 };
 
-// A server file as the app's StoredFile; `uri` is a local copy when this phone has one.
-export const toStoredFile = (file: ServerFile, localUri = ''): StoredFile => ({
-  uri: localUri,
+// A server file as the app's StoredFile. `uri` is only set on a file picked for
+// upload; server files open through `fileId`.
+export const toStoredFile = (file: ServerFile): StoredFile => ({
+  uri: '',
   name: file.name,
   size: file.size,
   mimeType: file.mimeType,
   fileId: file.fileId,
 });
 
-export const toEntry = (entry: ServerEntry, localUri = ''): RecordEntry => ({
+export const toEntry = (entry: ServerEntry): RecordEntry => ({
   ...entry,
-  file: entry.file && toStoredFile(entry.file, localUri),
+  file: entry.file && toStoredFile(entry.file),
 });
 
 // React Native's FormData takes {uri, name, type} for a file part.
@@ -200,7 +201,11 @@ export const api = {
     who: {patientId: string} | {patient: NewPatient},
   ) =>
     request<{
-      data: {appointment: Appointment; patient: Patient; patientCreated: boolean};
+      data: {
+        appointment: Appointment;
+        patient: Patient;
+        patientCreated: boolean;
+      };
       warnings: {overlaps: string[]; inPast: boolean};
     }>('/api/appointments', {
       method: 'POST',

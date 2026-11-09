@@ -16,29 +16,24 @@ export const EMPTY_PROFILE: DoctorProfile = {
   clinicName: '',
   ...DEFAULT_CLINIC_HOURS,
   workingDays: [false, true, true, true, true, true, true], // Mon–Sat
-  photoUri: '',
   photoUrl: '',
 };
 
-export type ProfileChanges = Partial<
-  Omit<DoctorProfile, 'photoUri' | 'photoUrl'>
->;
+export type ProfileChanges = Partial<Omit<DoctorProfile, 'photoUrl'>>;
 
 type DoctorState = {
-  profile: DoctorProfile; // cache of the server's profile
-  // Saves to the server (photo first, if any), then updates the cache.
+  profile: DoctorProfile; // the server's profile, in memory only
+  // Saves to the server (photo first, if any), then shows the server's copy.
   // Throws ApiError when the server can't be reached or refuses.
   saveProfile: (changes: ProfileChanges, photo?: StoredFile) => Promise<void>;
   // Settings › Appointment alerts: a reminder 15 minutes before each visit.
-  // Per phone (it needs this phone's notification permission), so not synced.
+  // A setting for this phone's notifications, not doctor data: the only part
+  // of this store saved on the phone.
   alerts: boolean;
   setAlerts: (on: boolean) => void;
 };
 
-export const fromServer = (
-  doctor: ServerDoctor,
-  photoUri: string,
-): DoctorProfile => ({
+export const fromServer = (doctor: ServerDoctor): DoctorProfile => ({
   name: doctor.name,
   qualifications: doctor.qualifications,
   speciality: doctor.speciality,
@@ -49,39 +44,27 @@ export const fromServer = (
   closes: doctor.closes,
   workingDays: doctor.workingDays,
   photoUrl: doctor.photoUrl,
-  photoUri,
 });
 
 export const useDoctorStore = create<DoctorState>()(
   persist(
-    (set, get): DoctorState => ({
+    (set): DoctorState => ({
       profile: EMPTY_PROFILE,
       saveProfile: async (changes, photo) => {
-        let photoUri = get().profile.photoUri;
         if (photo) {
           await api.uploadPhoto(photo);
-          photoUri = photo.uri;
         }
         const {doctor} = await api.updateProfile(changes);
-        set({profile: fromServer(doctor, photoUri)});
+        set({profile: fromServer(doctor)});
       },
       alerts: false,
       setAlerts: alerts => set({alerts}),
     }),
     {
-      name: 'doctor',
+      // Not "doctor": that key held the old on-phone profile (removed at launch).
+      name: 'doctor-settings',
       storage: zustandStorage,
-      partialize: s => ({profile: s.profile, alerts: s.alerts}),
-      // Keep every saved field; a profile saved by an older version gets
-      // defaults for any profile field added since.
-      merge: (saved, current) => {
-        const persisted = saved as Partial<DoctorState> | undefined;
-        return {
-          ...current,
-          ...persisted,
-          profile: {...current.profile, ...persisted?.profile},
-        };
-      },
+      partialize: s => ({alerts: s.alerts}),
     },
   ),
 );

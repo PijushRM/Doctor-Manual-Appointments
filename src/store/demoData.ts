@@ -54,4 +54,3 @@ export const buildDemoData = (now: Date) => {
   };
   return {patients, appointments, doctor};
 };
-

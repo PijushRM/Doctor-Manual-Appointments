@@ -1,11 +1,15 @@
-// The Dental backend (Next.js + MongoDB).
-// Debug: the Android emulator reaches this computer's localhost at 10.0.2.2.
-// On a real phone, use this computer's Wi-Fi IP instead, e.g. http://192.168.1.20:3000.
-// Release: must be https (cleartext http is only allowed in debug builds).
-const DEV_API_URL = 'http://10.0.2.2:3000';
-const PROD_API_URL = 'https://api.example.com';
+import {API_URL as ENV_API_URL} from '@env';
 
-export const API_URL = __DEV__ ? DEV_API_URL : PROD_API_URL;
+// The Dental backend (Next.js + MongoDB). The base URL comes from API_URL in .env
+// (see .env.example); .env.development / .env.production override it per build type.
+// Release builds need https (cleartext http is only allowed in debug builds).
+// Inlined at build time: after editing .env, restart Metro with `bun start --reset-cache`.
+if (!ENV_API_URL) {
+  throw new Error('API_URL is missing. Copy .env.example to .env and set it.');
+}
+
+// Request paths start with /api/..., so drop any trailing slash.
+export const API_URL = ENV_API_URL.replace(/\/+$/, '');
 
 // Give up on a request after this long (slow clinic Wi-Fi, server down).
 export const API_TIMEOUT_MS = 20_000;

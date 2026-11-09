@@ -20,7 +20,7 @@ import {
 import type {PatientsStackParamList} from 'src/navigation/types';
 import {
   chooseFile,
-  keepFile,
+  toUpload,
   takePhoto,
   type PickedFile,
 } from 'src/services/fileService';
@@ -72,9 +72,9 @@ export const useUploadNoteViewModel = () => {
     setSaving(true);
     try {
       // A file picked before switching to "Note only" is dropped.
-      const stored =
+      const upload =
         !isNote && file
-          ? await keepFile(
+          ? toUpload(
               file,
               file.fromCamera ? photoName(patient.name, new Date()) : file.name,
             )
@@ -82,7 +82,7 @@ export const useUploadNoteViewModel = () => {
       const id = await addEntry({
         patientId,
         docType: isNote ? null : type,
-        file: stored,
+        file: upload,
         note: note.trim(),
       });
       navigation.navigate('PatientProfile', {patientId, addedEntryId: id});
@@ -93,7 +93,7 @@ export const useUploadNoteViewModel = () => {
           ? e.offline
             ? OFFLINE_MESSAGE
             : e.message
-          : 'The phone may be low on space. Please try again.',
+          : 'Please try again.',
       );
     } finally {
       setSaving(false);

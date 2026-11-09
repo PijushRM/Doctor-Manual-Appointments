@@ -1,11 +1,9 @@
 import {
   errorCodes,
   isErrorWithCode,
-  keepLocalCopy,
   pick,
 } from '@react-native-documents/picker';
-import {viewDocument} from '@react-native-documents/viewer';
-import {Linking, LogBox} from 'react-native';
+import {Linking} from 'react-native';
 import {
   launchCamera,
   launchImageLibrary,
@@ -72,46 +70,18 @@ export const chooseFile = async (): Promise<PickedFile | null> => {
   }
 };
 
-// Camera and gallery results are file:// copies in this app's own cache, so
-// their access can't lapse the way a borrowed content:// uri can; the
-// picker's "wasn't picked with this module" warning doesn't apply to them.
-LogBox.ignoreLogs(["keepLocalCopy: You're trying to copy a file"]);
-
-// Copies into the app's documents folder (its own random subfolder), so the
-// record outlives cache clears and the picker's temporary access.
-export const keepFile = async (
+// Ready to upload under `name`. Nothing is copied onto the phone: the picked
+// file is sent to the server straight from where the picker left it.
+export const toUpload = (
   {fromCamera: _, ...file}: PickedFile,
   name: string,
-): Promise<StoredFile> => {
-  const [copy] = await keepLocalCopy({
-    files: [{uri: file.uri, fileName: name}],
-    destination: 'documentDirectory',
-  });
-  if (copy.status !== 'success') {
-    throw new Error(copy.copyError);
-  }
-  return {...file, name, uri: copy.localUri};
-};
+): StoredFile => ({...file, name});
 
-// Hands the file to whichever app opens it (PDF viewer, Photos…). A file this
-// phone never had (uploaded elsewhere) opens from the server via a 5-minute link.
+// Hands the file to whichever app opens it (PDF viewer, Photos…), from the
+// server via a 5-minute link. Nothing is downloaded into this app.
 export const openFile = async (file: StoredFile) => {
-  if (file.uri) {
-    try {
-      return await viewDocument({
-        uri: file.uri,
-        mimeType: file.mimeType,
-        grantPermissions: 'read',
-      });
-    } catch (e) {
-      if (!file.fileId) {
-        throw e;
-      }
-      // The local copy is gone (app data cleared): fall back to the server.
-    }
-  }
   if (!file.fileId) {
-    throw new Error('File has no local or server copy');
+    throw new Error('File is not on the server');
   }
   return Linking.openURL(await api.fileLink(file.fileId));
 };

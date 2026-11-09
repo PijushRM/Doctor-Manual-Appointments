@@ -32,5 +32,8 @@ class MMKVLoader {
 
 mock.module('react-native-mmkv-storage', () => ({MMKVLoader}));
 
-// React Native's build flag; src/configs/api.ts picks the dev server with it.
+// .env values are inlined by Babel in the app; Bun doesn't run Babel, so stub them.
+mock.module('@env', () => ({API_URL: 'http://localhost:3000'}));
+
+// React Native's build flag.
 (globalThis as {__DEV__?: boolean}).__DEV__ = true;

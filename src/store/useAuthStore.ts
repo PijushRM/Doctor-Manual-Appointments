@@ -9,12 +9,7 @@ import {
   type PasswordChangeError,
 } from 'src/features/auth/credentials';
 import {ApiError, api, configureApi} from 'src/services/api';
-import {
-  applyDoctor,
-  clearCache,
-  syncAll,
-  uploadLocalProfile,
-} from 'src/store/sync';
+import {applyDoctor, clearData, syncAll} from 'src/store/sync';
 
 type AuthState = {
   token: string | null;
@@ -39,7 +34,7 @@ const networkError = (e: unknown): 'offline' | 'server' =>
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    set => ({
       token: null,
       identifier: null,
       isLoggedIn: false,
@@ -54,21 +49,15 @@ export const useAuthStore = create<AuthState>()(
             mode === 'register'
               ? await api.register(id, password)
               : await api.login(id, password);
-          // A different doctor on this phone: drop the previous one's cache.
-          // (No previous login: data saved before the server is kept and uploaded.)
-          const previous = get().identifier;
-          if (previous && previous !== session.doctor.identifier) {
-            clearCache();
-          }
+          clearData();
           set({
             token: session.token,
             identifier: session.doctor.identifier,
             isLoggedIn: true,
           });
-          applyDoctor(
-            previous ? session.doctor : await uploadLocalProfile(session.doctor),
-          );
-          await syncAll().catch(() => {}); // screens fill in on the next sync
+          applyDoctor(session.doctor);
+          // A failure here shows the "Couldn't load" screen with Retry.
+          await syncAll().catch(() => {});
           return null;
         } catch (e) {
           if (e instanceof ApiError && e.status === 401) {
@@ -83,10 +72,10 @@ export const useAuthStore = create<AuthState>()(
           return networkError(e);
         }
       },
-      // Patient data is cleared too: it lives on the server, not this phone.
+      // Patient data lives on the server only; drop what is in memory.
       logOut: () => {
         set({token: null, isLoggedIn: false});
-        clearCache({keepPending: true});
+        clearData();
       },
       changePassword: async (current, next, confirm) => {
         const error = validatePasswordChange(next, confirm);
