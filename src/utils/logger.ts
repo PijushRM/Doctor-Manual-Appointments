@@ -16,6 +16,8 @@ export type LogArea =
   | 'auth'
   | 'sync'
   | 'api'
+  | 'list'
+  | 'stats'
   | 'save'
   | 'settings'
   | 'reminders'

@@ -1,5 +1,5 @@
 import React from 'react';
-import {FlatList, Pressable, TextInput, View} from 'react-native';
+import {ActivityIndicator, FlatList, Pressable, RefreshControl, TextInput, View} from 'react-native';
 import {AppText} from 'src/components/shared/AppText';
 import {DoctorHeader} from 'src/components/shared/DoctorHeader';
 import {Icon} from 'src/components/shared/Icon';
@@ -97,8 +97,30 @@ export const PatientListScreen = () => {
           // The rounded card (the design's `.grp`) wraps the rows themselves.
           contentContainerStyle={vm.rows.length > 0 && styles.group}
           keyboardShouldPersistTaps="handled"
+          onEndReached={vm.onEndReached}
+          onEndReachedThreshold={0.5}
+          refreshControl={
+            <RefreshControl
+              refreshing={vm.refreshing}
+              onRefresh={vm.onRefresh}
+              tintColor={theme.colors.textSubtle}
+            />
+          }
+          ListFooterComponent={
+            vm.loadingMore ? (
+              <ActivityIndicator style={styles.footer} color={theme.colors.textSubtle} />
+            ) : null
+          }
           ListEmptyComponent={
-            <AppText variant="bodySmall">{vm.emptyText}</AppText>
+            vm.status === 'loading' ? (
+              <ActivityIndicator color={theme.colors.textSubtle} />
+            ) : vm.status === 'error' ? (
+              <Pressable onPress={vm.onRefresh} accessibilityRole="button">
+                <AppText variant="bodySmall">{vm.error}</AppText>
+              </Pressable>
+            ) : (
+              <AppText variant="bodySmall">{vm.emptyText}</AppText>
+            )
           }
         />
       </View>

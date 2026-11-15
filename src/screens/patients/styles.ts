@@ -29,6 +29,7 @@ export const makeStyles = (theme: Theme) =>
     },
     sorted: {marginTop: 4},
     list: {flex: 1, marginBottom: 16},
+    footer: {paddingVertical: 16},
     group: {
       backgroundColor: theme.colors.surface,
       borderWidth: 1,

@@ -3,6 +3,7 @@ import {formatTime, minutesOfDay} from 'src/features/appointments/schedule';
 import {tr} from 'src/i18n';
 import {formatDate} from 'src/i18n/format';
 import {patientsText} from 'src/i18n/strings/patients';
+import type {ServerPatient} from 'src/services/api';
 import type {
   Appointment,
   DocType,
@@ -159,6 +160,37 @@ export type PatientListRow = {
   age: number;
   activity: string;
   when: string;
+};
+
+// A Patients list row built from the server's denormalized `lastActivity`, so
+// the paginated list needs only the patient (not their appointments and
+// records). Produces the same line and time as patientListRows would for that
+// patient's most recent *action* (added / booked / upload / note).
+export const patientRowFromServer = (
+  patient: ServerPatient,
+  now: Date,
+): PatientListRow => {
+  const t = tr(patientsText);
+  const a = patient.lastActivity;
+  const at = a ? new Date(a.at) : new Date(patient.createdAt);
+  let activity: string;
+  if (!a || a.kind === 'added') {
+    activity = t.addedByYou;
+  } else if (a.kind === 'booked') {
+    activity = `${t.appointmentBooked} · ${appointmentDay(new Date(a.startsAt ?? at))}`;
+  } else {
+    const title =
+      a.kind === 'upload' && a.docType ? uploadTitle(a.docType) : t.noteAdded;
+    activity = a.note ? `${title} · ${a.note}` : title;
+  }
+  return {
+    id: patient.id,
+    initials: initials(patient.name),
+    name: patient.name,
+    age: patient.age,
+    activity,
+    when: formatWhen(at, now),
+  };
 };
 
 // The earliest appointment still ahead, if any.

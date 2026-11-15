@@ -1,5 +1,13 @@
 import React from 'react';
-import {Pressable, ScrollView, View} from 'react-native';
+import {
+  ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
 import {AppText} from 'src/components/shared/AppText';
 import {DoctorHeader} from 'src/components/shared/DoctorHeader';
 import {Icon} from 'src/components/shared/Icon';
@@ -10,12 +18,25 @@ import {useMyPatientsViewModel} from 'src/hooks/useMyPatientsViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
 import {makeStyles} from './styles';
 
+// Load the next page when the scroll is within this many px of the bottom.
+const END_THRESHOLD = 240;
+
 // Artboards: doctor/DocPatients, DocPatientsUpcoming, DocPatientsAll (+ Part 2)
 export const MyPatientsScreen = () => {
   const vm = useMyPatientsViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
   const {t} = vm;
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const {contentOffset, contentSize, layoutMeasurement} = e.nativeEvent;
+    if (
+      contentOffset.y + layoutMeasurement.height >=
+      contentSize.height - END_THRESHOLD
+    ) {
+      vm.onEndReached();
+    }
+  };
 
   return (
     <Screen>
@@ -56,27 +77,46 @@ export const MyPatientsScreen = () => {
           contentContainerStyle={[
             styles.listContent,
             vm.showAdd && styles.listContentWithAdd,
-          ]}>
-          {vm.groups.length === 0 && (
-            <AppText variant="bodySmall">{vm.emptyText}</AppText>
-          )}
-          {vm.groups.map(group => (
+          ]}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl
+              refreshing={vm.refreshing}
+              onRefresh={vm.onRefresh}
+              tintColor={colors.textSubtle}
+            />
+          }>
+          {vm.sections.length === 0 &&
+            (vm.status === 'loading' ? (
+              <ActivityIndicator color={colors.textSubtle} />
+            ) : vm.status === 'error' ? (
+              <Pressable onPress={vm.onRefresh} accessibilityRole="button">
+                <AppText variant="bodySmall">{vm.error}</AppText>
+              </Pressable>
+            ) : (
+              <AppText variant="bodySmall">{vm.emptyText}</AppText>
+            ))}
+          {vm.sections.map(group => (
             <View key={group.key}>
               <AppText variant="caption" style={styles.groupTitle}>
                 {group.title}
               </AppText>
               <View style={styles.group}>
-                {group.rows.map((row, i) => (
+                {group.data.map((row, i) => (
                   <PatientRow
                     key={row.appointmentId}
                     {...row}
-                    divider={i < group.rows.length - 1}
+                    divider={i < group.data.length - 1}
                     onPress={() => vm.openPatient(row.patientId)}
                   />
                 ))}
               </View>
             </View>
           ))}
+          {vm.loadingMore && (
+            <ActivityIndicator style={styles.footer} color={colors.textSubtle} />
+          )}
         </ScrollView>
       </View>
 

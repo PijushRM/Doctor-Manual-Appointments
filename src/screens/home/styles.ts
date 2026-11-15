@@ -20,6 +20,7 @@ export const makeStyles = (theme: Theme) =>
       borderColor: theme.colors.fillStrong,
     },
     list: {flex: 1},
+    footer: {paddingVertical: 16},
     listContent: {gap: 12, paddingBottom: 24},
     listContentWithAdd: {paddingBottom: 96}, // clear the floating button
     groupTitle: {marginBottom: 8},

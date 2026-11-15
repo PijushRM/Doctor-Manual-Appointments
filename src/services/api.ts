@@ -202,6 +202,46 @@ export type SyncPayload = {
   entries: ServerEntry[];
 };
 
+// ---- Pagination (the Patients list and the Home tabs load 10 at a time) ----
+
+export const PAGE_SIZE = 10;
+
+// One page: the rows, plus the cursor for the next page (null = last page).
+export type Page<T> = {data: T[]; nextCursor: string | null};
+
+// The patient's most recent action, denormalized by the server so the list row
+// renders without loading that patient's appointments and records. Dates are
+// ISO strings (see activity.ts: lastActivitySummary formats this).
+export type ServerActivity = {
+  kind: 'added' | 'booked' | 'upload' | 'note';
+  at: string;
+  startsAt?: string;
+  docType?: DocType;
+  note?: string;
+};
+export type ServerPatient = Patient & {
+  lastActivityAt?: string | null;
+  lastActivity?: ServerActivity | null;
+};
+
+// A list appointment carries its patient, so the Home tabs need no patients array.
+export type ServerAppointmentWithPatient = Appointment & {patient: Patient | null};
+
+export type Counts = {
+  patients: number;
+  all: number;
+  today: number;
+  upcoming: number;
+  thisWeek: number;
+};
+
+// Builds a query string, dropping undefined/empty values and encoding the rest.
+const qs = (params: Record<string, string | number | undefined | null>) =>
+  Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== null && v !== '')
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+    .join('&');
+
 // A server file as the app's StoredFile. `uri` is only set on a file picked for
 // upload; server files open through `fileId`.
 export const toStoredFile = (file: ServerFile): StoredFile => ({
@@ -264,6 +304,46 @@ export const api = {
     }),
 
   sync: () => request<SyncPayload>('/api/sync'),
+
+  // Patients tab: one page (10) of patients, most recent activity first. `q`
+  // searches name/phone on the server; `cursor` is the previous page's nextCursor.
+  listPatients: (opts: {q?: string; cursor?: string | null} = {}) =>
+    request<Page<ServerPatient>>(
+      `/api/patients?${qs({q: opts.q, cursor: opts.cursor, limit: PAGE_SIZE})}`,
+    ),
+
+  // Home tabs: one page (10) of slot-holding appointments, each with its patient.
+  // The caller passes its own local window (`from`/`to`) and `order`, so day
+  // grouping stays in the phone's timezone.
+  listAppointments: (
+    opts: {
+      from?: Date;
+      to?: Date;
+      order?: 'asc' | 'desc';
+      cursor?: string | null;
+    } = {},
+  ) =>
+    request<Page<ServerAppointmentWithPatient>>(
+      `/api/appointments?${qs({
+        from: opts.from?.toISOString(),
+        to: opts.to?.toISOString(),
+        order: opts.order,
+        cursor: opts.cursor,
+        limit: PAGE_SIZE,
+      })}`,
+    ),
+
+  // Counts for the Home badges and Profile cards. The caller passes its local
+  // day/week boundaries (so today/upcoming/thisWeek match the phone's timezone).
+  stats: (bounds: {dayStart: Date; dayEnd: Date; weekStart: Date; weekEnd: Date}) =>
+    request<{data: Counts}>(
+      `/api/stats?${qs({
+        dayStart: bounds.dayStart.toISOString(),
+        dayEnd: bounds.dayEnd.toISOString(),
+        weekStart: bounds.weekStart.toISOString(),
+        weekEnd: bounds.weekEnd.toISOString(),
+      })}`,
+    ),
 
   addPatient: (patient: NewPatient) =>
     request<{data: Patient; created: boolean}>('/api/patients', {
