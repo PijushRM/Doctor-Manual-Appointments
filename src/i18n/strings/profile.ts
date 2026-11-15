@@ -70,7 +70,9 @@ export const profileText = defineStrings({
   // About
   aboutHeader: 'ABOUT THIS APP',
   developedBy: 'Developed by',
-  website: 'WEBSITE',
+  website: 'LINKEDIN',
+  developerLoadFailed: 'Couldn’t load the developer details.',
+  tryAgain: 'Try again',
   // "DOCTOR APP · VERSION 1.0.0 (BUILD 1)"
   versionLine: (version: string, build: string) =>
     `DOCTOR APP · VERSION ${version} (BUILD ${build})`,
@@ -140,7 +142,9 @@ export const profileText = defineStrings({
   errDays: 'অন্তত একটি কাজের দিন বেছে নিন।',
   aboutHeader: 'অ্যাপ সম্পর্কে',
   developedBy: 'তৈরি করেছেন',
-  website: 'ওয়েবসাইট',
+  website: 'লিংকডইন',
+  developerLoadFailed: 'ডেভেলপারের তথ্য লোড করা গেল না।',
+  tryAgain: 'আবার চেষ্টা করুন',
   versionLine: (version: string, build: string) =>
     `ডাক্তার অ্যাপ · সংস্করণ ${version} (বিল্ড ${build})`,
   copyright: (year: string, owner: string) =>

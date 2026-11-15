@@ -1,5 +1,11 @@
 import React from 'react';
-import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {AppText} from 'src/components/shared/AppText';
 import {BackHeader} from 'src/components/shared/BackHeader';
 import {Icon} from 'src/components/shared/Icon';
@@ -44,35 +50,55 @@ export const AboutScreen = () => {
         <AppText variant="heading" accessibilityRole="header">
           {t.developedBy}
         </AppText>
-        <View style={shared.card}>
-          {vm.developer.map((row, i) => (
-            <Pressable
-              key={row.icon}
-              disabled={!row.open}
-              onPress={row.open}
-              accessibilityRole={row.open ? 'link' : undefined}
-              accessibilityLabel={[row.label, row.value]
-                .filter(Boolean)
-                .join(': ')}
-              style={[
-                styles.row,
-                i < vm.developer.length - 1 && shared.divider,
-              ]}>
-              <View style={styles.rowIcon}>
-                <Icon name={row.icon} size={16} color={colors.textLink} />
-              </View>
-              <View style={shared.rowText}>
-                {row.label && <AppText variant="caption">{row.label}</AppText>}
-                <AppText
-                  variant={row.label ? 'bodySmall' : 'bodyStrong'}
-                  color="textBase"
-                  style={row.label && styles.value}>
-                  {row.value}
-                </AppText>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+        {vm.developerLoading && (
+          <ActivityIndicator style={styles.status} color={colors.textLink} />
+        )}
+        {vm.developerFailed && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={vm.retryDeveloper}
+            style={styles.status}>
+            <AppText variant="bodySmall" color="textSubtle">
+              {t.developerLoadFailed}
+            </AppText>
+            <AppText variant="label" color="textLink">
+              {t.tryAgain}
+            </AppText>
+          </Pressable>
+        )}
+        {vm.developer.length > 0 && (
+          <View style={shared.card}>
+            {vm.developer.map((row, i) => (
+              <Pressable
+                key={row.icon}
+                disabled={!row.open}
+                onPress={row.open}
+                accessibilityRole={row.open ? 'link' : undefined}
+                accessibilityLabel={[row.label, row.value]
+                  .filter(Boolean)
+                  .join(': ')}
+                style={[
+                  styles.row,
+                  i < vm.developer.length - 1 && shared.divider,
+                ]}>
+                <View style={styles.rowIcon}>
+                  <Icon name={row.icon} size={16} color={colors.textLink} />
+                </View>
+                <View style={shared.rowText}>
+                  {row.label && (
+                    <AppText variant="caption">{row.label}</AppText>
+                  )}
+                  <AppText
+                    variant={row.label ? 'bodySmall' : 'bodyStrong'}
+                    color="textBase"
+                    style={row.label && styles.value}>
+                    {row.value}
+                  </AppText>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <AppText variant="caption" style={styles.copyright}>
           {vm.copyright}
@@ -84,6 +110,7 @@ export const AboutScreen = () => {
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
+    status: {alignItems: 'center', gap: 4, paddingVertical: 12},
     content: {
       flexGrow: 1,
       paddingTop: 12,

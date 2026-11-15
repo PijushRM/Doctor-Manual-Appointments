@@ -238,6 +238,12 @@ export const api = {
       json: {identifier, password},
       auth: false,
     }),
+  // About › Developed by, from the server's .env. Empty = not set.
+  about: () =>
+    request<{
+      developer: {name: string; email: string; phone: string; website: string};
+    }>('/api/about', {auth: false}),
+
   // Forgot password: the clinic's reset code (checked by the server) and a
   // new password. Returns a session, like login.
   resetPassword: (input: {
