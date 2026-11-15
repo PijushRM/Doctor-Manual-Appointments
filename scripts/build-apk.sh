@@ -2,7 +2,8 @@
 # Builds an APK with the JavaScript bundled in (no Metro needed) and copies it
 # to ~/Downloads. Uses API_URL etc. from .env at build time.
 #   bun run apk        release  -> SmileDoctor-v<version>-<build>.apk
-#   bun run apk:debug  debug    -> SmileDoctor-v<version>-<build>-debug.apk
+#   bun run apk:debug  debug
+#                      -> SmileDoctor-v<version>-<build>-debug-<YYYY-MM-DD_HH-MM>.apk
 #                      (debuggable, full [App] logging incl. every server call)
 set -e
 cd "$(dirname "$0")/.."
@@ -25,7 +26,8 @@ if [ "$MODE" = "debug" ]; then
   echo "Building Smile Doctor v$VERSION ($BUILD) DEBUG for $API_URL ..."
   (cd android && LOG_LEVEL=debug ./gradlew assembleDebug -PstandaloneDebug $PHONES --console=plain -q)
   BUILT=android/app/build/outputs/apk/debug/app-debug.apk
-  SUFFIX="-debug"
+  # Date and time too, so each debug build is its own file (nothing overwritten).
+  SUFFIX="-debug-$(date +%Y-%m-%d_%H-%M)"
 else
   echo "Building Smile Doctor v$VERSION ($BUILD) for $API_URL ..."
   (cd android && ./gradlew assembleRelease $PHONES --console=plain -q)
