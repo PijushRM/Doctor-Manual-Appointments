@@ -1,9 +1,8 @@
 import {useState} from 'react';
-import {Alert} from 'react-native';
-import {
-  forgotPasswordMessage,
-  loginErrorMessage,
-} from 'src/features/auth/credentials';
+import {useNavigation} from '@react-navigation/native';
+import type {StackNavigationProp} from '@react-navigation/stack';
+import {loginErrorMessage} from 'src/features/auth/credentials';
+import type {RootStackParamList} from 'src/navigation/types';
 import {tr} from 'src/i18n';
 import {loginText} from 'src/i18n/strings/auth';
 import {useAuthStore} from 'src/store/useAuthStore';
@@ -11,6 +10,8 @@ import {useAuthStore} from 'src/store/useAuthStore';
 type Mode = 'login' | 'register';
 
 export const useLoginViewModel = () => {
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamList, 'Login'>>();
   const logIn = useAuthStore(s => s.logIn);
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -72,7 +73,8 @@ export const useLoginViewModel = () => {
     submit: () => {
       submit().catch(() => setBusy(false));
     },
+    // The email/ID already typed here carries over.
     forgotPassword: () =>
-      Alert.alert(t.forgotPassword, forgotPasswordMessage()),
+      navigation.navigate('ResetPassword', {identifier: identifier.trim()}),
   };
 };

@@ -5,10 +5,12 @@ import {
   normalizeIdentifier,
   validateLogin,
   validatePasswordChange,
+  validateReset,
   type LoginError,
   type PasswordChangeError,
+  type ResetError,
 } from 'src/features/auth/credentials';
-import {ApiError, api, configureApi} from 'src/services/api';
+import {ApiError, api, configureApi, type ServerDoctor} from 'src/services/api';
 import {applyDoctor, clearData, syncAll} from 'src/store/sync';
 import {logger} from 'src/utils/logger';
 
@@ -22,12 +24,32 @@ type AuthState = {
     password: string,
     mode?: 'login' | 'register',
   ) => Promise<LoginError | null>;
+  // Forgot password: the clinic reset code + a new password; logs in.
+  resetPassword: (
+    identifier: string,
+    code: string,
+    password: string,
+    confirm: string,
+  ) => Promise<ResetError | null>;
   logOut: () => void;
   changePassword: (
     current: string,
     next: string,
     confirm: string,
   ) => Promise<PasswordChangeError | null>;
+};
+
+// Logged in (login, new account or password reset): start fresh with the
+// server's data. A failed first load shows the "Couldn't load" screen.
+const startSession = async (session: {token: string; doctor: ServerDoctor}) => {
+  clearData();
+  useAuthStore.setState({
+    token: session.token,
+    identifier: session.doctor.identifier,
+    isLoggedIn: true,
+  });
+  applyDoctor(session.doctor);
+  await syncAll().catch(() => {});
 };
 
 const networkError = (e: unknown): 'offline' | 'server' =>
@@ -50,19 +72,11 @@ export const useAuthStore = create<AuthState>()(
             mode === 'register'
               ? await api.register(id, password)
               : await api.login(id, password);
-          clearData();
-          set({
-            token: session.token,
-            identifier: session.doctor.identifier,
-            isLoggedIn: true,
-          });
           logger.info(
             'auth',
             mode === 'register' ? 'Account created' : 'Logged in',
           );
-          applyDoctor(session.doctor);
-          // A failure here shows the "Couldn't load" screen with Retry.
-          await syncAll().catch(() => {});
+          await startSession(session);
           return null;
         } catch (e) {
           logger.warn(
@@ -78,6 +92,50 @@ export const useAuthStore = create<AuthState>()(
           }
           if (e instanceof ApiError && e.status === 400) {
             return e.details?.password ? 'shortPassword' : 'missingIdentifier';
+          }
+          return networkError(e);
+        }
+      },
+      resetPassword: async (identifier, code, password, confirm) => {
+        const error = validateReset(identifier, code, password, confirm);
+        if (error) {
+          return error;
+        }
+        try {
+          const session = await api.resetPassword({
+            identifier: normalizeIdentifier(identifier),
+            code: code.trim(),
+            password,
+            confirm,
+          });
+          logger.info('auth', 'Password reset; logged in');
+          await startSession(session);
+          return null;
+        } catch (e) {
+          logger.warn(
+            'auth',
+            'Password reset failed',
+            e instanceof ApiError ? e.status : e,
+          );
+          if (e instanceof ApiError) {
+            if (e.status === 404) {
+              return 'noAccount';
+            }
+            if (e.status === 429) {
+              return 'locked';
+            }
+            if (e.status === 503) {
+              return 'notSetUp';
+            }
+            if (e.status === 400) {
+              return e.details?.code
+                ? 'wrongCode'
+                : e.details?.confirm
+                ? 'notMatching'
+                : e.details?.password
+                ? 'shortPassword'
+                : 'missingIdentifier';
+            }
           }
           return networkError(e);
         }

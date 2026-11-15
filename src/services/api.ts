@@ -238,6 +238,19 @@ export const api = {
       json: {identifier, password},
       auth: false,
     }),
+  // Forgot password: the clinic's reset code (checked by the server) and a
+  // new password. Returns a session, like login.
+  resetPassword: (input: {
+    identifier: string;
+    code: string;
+    password: string;
+    confirm: string;
+  }) =>
+    request<Session>('/api/auth/reset-password', {
+      method: 'POST',
+      json: input,
+      auth: false,
+    }),
   changePassword: (current: string, next: string, confirm: string) =>
     request<{ok: true; token: string}>('/api/auth/change-password', {
       method: 'POST',

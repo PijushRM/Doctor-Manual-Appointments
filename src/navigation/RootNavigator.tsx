@@ -3,6 +3,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {AppointmentSavedScreen} from 'src/screens/appointments/AppointmentSavedScreen';
 import {LoadingDataScreen} from 'src/screens/auth/LoadingDataScreen';
 import {LoginScreen} from 'src/screens/auth/LoginScreen';
+import {ResetPasswordScreen} from 'src/screens/auth/ResetPasswordScreen';
 import {useAuthStore} from 'src/store/useAuthStore';
 import {useSyncStore} from 'src/store/sync';
 import {MainTabs} from './MainTabs';
@@ -28,7 +29,10 @@ export const RootNavigator = () => {
           />
         </>
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

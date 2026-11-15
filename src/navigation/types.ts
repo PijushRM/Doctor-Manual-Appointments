@@ -45,6 +45,8 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
+  // Forgot password; the email/ID typed on Login comes along.
+  ResetPassword: {identifier?: string} | undefined;
   LoadingData: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
   AppointmentSaved: {appointmentId: string};

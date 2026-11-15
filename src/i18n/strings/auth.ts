@@ -114,3 +114,52 @@ export const loadingText = defineStrings({
   tryAgain: 'আবার চেষ্টা করুন',
   logOut: 'লগ আউট',
 });
+
+// Forgot password (Reset password screen).
+export const resetText = defineStrings({
+  back: 'Back to log in',
+  titleStart: 'Reset',
+  titleAccent: 'password',
+  intro:
+    'Enter the reset code from your clinic admin, then choose a new password.',
+  identifier: 'Email or registration ID',
+  code: 'Reset code',
+  codePlaceholder: 'From your clinic admin',
+  password: 'New password',
+  passwordPlaceholder: 'At least 6 characters',
+  confirm: 'Confirm new password',
+  confirmPlaceholder: 'Type the new password again',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
+  submit: 'Set new password',
+  submitting: 'Saving…',
+  missingCode: 'Enter the reset code.',
+  wrongCode: 'The reset code is incorrect.',
+  noAccount: 'No account with this email or ID.',
+  locked: 'Too many wrong codes. Please wait 15 minutes and try again.',
+  notSetUp: 'Password reset isn’t set up. Please contact your clinic admin.',
+})({
+  back: 'লগ ইনে ফিরুন',
+  titleStart: 'পাসওয়ার্ড',
+  titleAccent: 'রিসেট',
+  intro:
+    'ক্লিনিকের অ্যাডমিনের দেওয়া রিসেট কোড লিখুন, তারপর নতুন পাসওয়ার্ড বেছে নিন।',
+  identifier: 'ইমেল বা রেজিস্ট্রেশন আইডি',
+  code: 'রিসেট কোড',
+  codePlaceholder: 'ক্লিনিকের অ্যাডমিনের কাছ থেকে',
+  password: 'নতুন পাসওয়ার্ড',
+  passwordPlaceholder: 'অন্তত ৬টি অক্ষর',
+  confirm: 'নতুন পাসওয়ার্ড আবার লিখুন',
+  confirmPlaceholder: 'নতুন পাসওয়ার্ডটি আবার লিখুন',
+  showPassword: 'পাসওয়ার্ড দেখান',
+  hidePassword: 'পাসওয়ার্ড লুকান',
+  submit: 'নতুন পাসওয়ার্ড সেট করুন',
+  submitting: 'সংরক্ষণ হচ্ছে…',
+  missingCode: 'রিসেট কোড লিখুন।',
+  wrongCode: 'রিসেট কোড ভুল।',
+  noAccount: 'এই ইমেল বা আইডি দিয়ে কোনো অ্যাকাউন্ট নেই।',
+  locked:
+    'অনেকবার ভুল কোড দেওয়া হয়েছে। ১৫ মিনিট অপেক্ষা করে আবার চেষ্টা করুন।',
+  notSetUp:
+    'পাসওয়ার্ড রিসেট চালু করা নেই। ক্লিনিকের অ্যাডমিনের সাথে যোগাযোগ করুন।',
+});

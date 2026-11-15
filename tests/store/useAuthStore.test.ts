@@ -252,3 +252,76 @@ describe('first load after login', () => {
     expect(useSyncStore.getState().status).toBe('error');
   });
 });
+
+describe('resetPassword (forgot password)', () => {
+  beforeEach(reset);
+  const {resetPassword} = useAuthStore.getState();
+
+  it('checks the form on the phone before calling the server', async () => {
+    const calls = fakeServer(() => undefined);
+    expect(await resetPassword('', 'c', 'password1', 'password1')).toBe(
+      'missingIdentifier',
+    );
+    expect(await resetPassword('dr@x.in', ' ', 'password1', 'password1')).toBe(
+      'missingCode',
+    );
+    expect(await resetPassword('dr@x.in', 'c', 'abc', 'abc')).toBe(
+      'shortPassword',
+    );
+    expect(await resetPassword('dr@x.in', 'c', 'password1', 'password2')).toBe(
+      'notMatching',
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  it('sets the new password and logs in', async () => {
+    const calls = fakeServer(({path}) =>
+      path === '/api/sync' ? {json: emptySync()} : session(),
+    );
+    expect(
+      await resetPassword(' DR@Clinic.in ', ' 123456 ', 'newpass1', 'newpass1'),
+    ).toBeNull();
+    expect(calls[0]).toMatchObject({
+      method: 'POST',
+      path: '/api/auth/reset-password',
+      json: {
+        identifier: 'dr@clinic.in',
+        code: '123456',
+        password: 'newpass1',
+        confirm: 'newpass1',
+      },
+    });
+    expect(calls[0].auth).toBeUndefined();
+    expect(useAuthStore.getState()).toMatchObject({
+      token: 'tok-1',
+      isLoggedIn: true,
+    });
+  });
+
+  it('explains what the server refused', async () => {
+    const reply = (status: number, json: object) => () => ({status, json});
+    fakeServer(
+      reply(400, {error: 'Validation failed', details: {code: 'wrong'}}),
+    );
+    expect(await resetPassword('dr@x.in', 'x', 'newpass1', 'newpass1')).toBe(
+      'wrongCode',
+    );
+    fakeServer(reply(404, {error: 'No account'}));
+    expect(await resetPassword('dr@x.in', 'x', 'newpass1', 'newpass1')).toBe(
+      'noAccount',
+    );
+    fakeServer(reply(429, {error: 'Locked'}));
+    expect(await resetPassword('dr@x.in', 'x', 'newpass1', 'newpass1')).toBe(
+      'locked',
+    );
+    fakeServer(reply(503, {error: 'Not set up'}));
+    expect(await resetPassword('dr@x.in', 'x', 'newpass1', 'newpass1')).toBe(
+      'notSetUp',
+    );
+    fakeServer(() => 'offline');
+    expect(await resetPassword('dr@x.in', 'x', 'newpass1', 'newpass1')).toBe(
+      'offline',
+    );
+    expect(useAuthStore.getState().isLoggedIn).toBe(false);
+  });
+});
