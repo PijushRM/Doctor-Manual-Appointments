@@ -48,6 +48,7 @@ export const patientsText = defineStrings({
   appointmentBooked: 'Appointment booked',
   bookedFor: 'Booked for ',
   visit: 'Visit',
+  absent: 'Absent',
   noteAdded: 'Note added',
   yesterday: 'Yesterday',
 
@@ -140,6 +141,7 @@ export const patientsText = defineStrings({
   appointmentBooked: 'অ্যাপয়েন্টমেন্ট বুক হয়েছে',
   bookedFor: 'বুক করা হয়েছে: ',
   visit: 'ভিজিট',
+  absent: 'অনুপস্থিত',
   noteAdded: 'নোট যোগ হয়েছে',
   yesterday: 'গতকাল',
 

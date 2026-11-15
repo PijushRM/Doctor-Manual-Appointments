@@ -9,6 +9,7 @@ import {
 import {tr} from 'src/i18n';
 import {appointmentsText} from 'src/i18n/strings/appointments';
 import type {Appointment} from 'src/types/clinic';
+import {holdsSlot} from './schedule';
 
 // Sunday first, in the current language.
 export const weekdayInitials = () => tr(appointmentsText).weekdayInitials;
@@ -16,7 +17,7 @@ export const weekdayInitials = () => tr(appointmentsText).weekdayInitials;
 export const dayKey = (date: Date) => format(date, 'yyyy-MM-dd');
 
 export const busyDayKeys = (appointments: Appointment[]) =>
-  new Set(appointments.map(a => dayKey(new Date(a.startsAt))));
+  new Set(appointments.filter(holdsSlot).map(a => dayKey(new Date(a.startsAt))));
 
 export type CalendarCell = {
   key: string;

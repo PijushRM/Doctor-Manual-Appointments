@@ -3,6 +3,7 @@ import {FlatList, Pressable, ScrollView, View} from 'react-native';
 import {CalendarSheet} from 'src/components/CalendarSheet';
 import {TimeWheel} from 'src/components/TimeWheel';
 import {AppText} from 'src/components/shared/AppText';
+import {BackHeader} from 'src/components/shared/BackHeader';
 import {BottomBar} from 'src/components/shared/BottomBar';
 import {Button} from 'src/components/shared/Button';
 import {Icon} from 'src/components/shared/Icon';
@@ -13,14 +14,28 @@ import {useStyles, useTheme} from 'src/hooks/useTheme';
 import {tick} from 'src/services/feedback';
 import {tr} from 'src/i18n';
 import {appointmentsText} from 'src/i18n/strings/appointments';
+import {rescheduleText} from 'src/i18n/strings/reschedule';
 import {DATE_CHIP_STEP, makeStyles} from './dateTimeStyles';
 
 // Artboards: doctor/DocAdd2 (scroll wheel = Option A), DocAdd2Cal (calendar open).
+// Also "Change time" for an existing appointment (vm.mode === 'move').
 export const NewAppointmentDateTimeScreen = () => {
   const vm = useNewAppointmentDateTimeViewModel();
   const {colors} = useTheme();
   const styles = useStyles(makeStyles);
   const t = tr(appointmentsText);
+  const r = tr(rescheduleText);
+  const moving = vm.mode === 'move';
+  // Booking for a known patient: no part 1, so a plain back header too.
+  const forPatient = vm.mode === 'book';
+
+  // The appointment being moved disappeared (e.g. after a refresh): go back.
+  useEffect(() => {
+    if (vm.gone) {
+      vm.back();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vm.gone]);
   const datesRef = useRef<FlatList<(typeof vm.dates)[number]>>(null);
   const selectedDate = vm.dates.findIndex(d => d.selected);
 
@@ -45,23 +60,32 @@ export const NewAppointmentDateTimeScreen = () => {
 
   return (
     <Screen>
-      <StepHeader
-        part={2}
-        total={2}
-        onBack={vm.back}
-        backLabel={t.backToDetails}
-      />
+      {moving || forPatient ? (
+        <BackHeader onBack={vm.back} backLabel={r.back} />
+      ) : (
+        <StepHeader
+          part={2}
+          total={2}
+          onBack={vm.back}
+          backLabel={t.backToDetails}
+        />
+      )}
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
-        <ProgressBar part={2} total={2} />
+        {vm.mode === 'new' && <ProgressBar part={2} total={2} />}
         <AppText
           variant="headline"
           accessibilityRole="header"
           style={styles.title}>
-          {t.dateTitleStart}{' '}
+          {moving ? r.titleStart : t.dateTitleStart}{' '}
           <AppText variant="headline" color="textLink">
-            {t.dateTitleAccent}
+            {moving ? r.titleAccent : t.dateTitleAccent}
           </AppText>
         </AppText>
+        {(moving || forPatient) && (
+          <AppText variant="bodySmall" color="textSubtle">
+            {moving ? `${vm.patientName} · ${vm.currently}` : vm.patientName}
+          </AppText>
+        )}
 
         <View style={styles.sectionRow}>
           <AppText variant="heading" accessibilityRole="header">
@@ -157,7 +181,15 @@ export const NewAppointmentDateTimeScreen = () => {
           {vm.summary}
         </AppText>
         <Button
-          title={vm.saving ? t.saving : t.saveAppointment}
+          title={
+            vm.saving
+              ? moving
+                ? r.saving
+                : t.saving
+              : moving
+              ? r.saveNewTime
+              : t.saveAppointment
+          }
           onPress={vm.save}
           disabled={vm.saving}
         />

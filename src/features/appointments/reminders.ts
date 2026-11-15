@@ -2,6 +2,7 @@ import {formatTime, minutesOfDay} from './schedule';
 import {tr} from 'src/i18n';
 import {remindersText} from 'src/i18n/strings/reminders';
 import type {Appointment, Patient} from 'src/types/clinic';
+import {holdsSlot} from './schedule';
 
 export const REMINDER_LEAD_MINUTES = 15;
 
@@ -15,7 +16,7 @@ export const upcomingReminders = (
 ): Reminder[] => {
   const byId = new Map(patients.map(p => [p.id, p]));
   const t = tr(remindersText);
-  return appointments.flatMap(a => {
+  return appointments.filter(holdsSlot).flatMap(a => {
     const startsAt = new Date(a.startsAt);
     const at = new Date(startsAt.getTime() - REMINDER_LEAD_MINUTES * 60_000);
     const patient = byId.get(a.patientId);

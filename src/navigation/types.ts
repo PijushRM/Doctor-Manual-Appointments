@@ -16,6 +16,11 @@ export type PatientsStackParamList = {
   // addedEntryId: just saved on Upload → green banner + "New" tag.
   PatientProfile: {patientId: string; addedEntryId?: string};
   UploadNote: {patientId: string; mode: 'upload' | 'note'};
+  // The New Appointment date & time screen, moving an existing appointment.
+  RescheduleAppointment: {appointmentId: string};
+  // The same screen, booking another appointment for this patient.
+  BookAppointment: {patientId: string};
+  EditPatient: {patientId: string};
 };
 
 export type ProfileStackParamList = {

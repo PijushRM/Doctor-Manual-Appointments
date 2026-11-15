@@ -27,6 +27,7 @@ import {useDoctorStore} from 'src/store/useDoctorStore';
 import type {StoredFile} from 'src/types/clinic';
 import {useNow} from './useNow';
 import {showError} from 'src/utils/showError';
+import {patientActionsText} from 'src/i18n/strings/patientActions';
 
 type Route = RouteProp<PatientsStackParamList, 'PatientProfile'>;
 
@@ -43,6 +44,10 @@ export const usePatientProfileViewModel = () => {
   const now = useNow();
   // Per appointment, while this screen is open: an SMS on its way or sent.
   const [sms, setSms] = useState<Record<string, 'sending' | 'sent'>>({});
+  // The appointment whose options sheet is open, and one being updated.
+  const [menuKey, setMenuKey] = useState<string>();
+  const [updating, setUpdating] = useState<string>();
+  const setAbsent = useClinicStore(s => s.setAbsent);
 
   // The banner and "New" tag last until the doctor leaves the profile. Kept as
   // local state: clearing the route param would fail once the screen is popped.
@@ -104,8 +109,92 @@ export const usePatientProfileViewModel = () => {
       {cancelable: true},
     );
 
+  const a = tr(patientActionsText);
+  const toggleAbsent = (appointmentId: string, absent: boolean) => {
+    setUpdating(appointmentId);
+    setAbsent(appointmentId, absent)
+      .catch(e => showError(a.absentFailed, e))
+      .finally(() => setUpdating(undefined));
+  };
+
+  const events = patientEvents(patient, appointments, entries, now).map(e => ({
+    ...e,
+    when: e.key === freshId ? t.justNow : formatWhen(e.at, now),
+    isNew: e.key === freshId,
+    sms: e.appointmentId
+      ? {
+          status: sms[e.appointmentId] ?? ('idle' as const),
+          send: () => {
+            const x = appointments.find(y => y.id === e.appointmentId);
+            if (x) {
+              confirmSms(x.id, appointmentDayTime(new Date(x.startsAt)));
+            }
+          },
+        }
+      : undefined,
+    // Upcoming bookings can be moved to another time.
+    changeTime: e.appointmentId
+      ? () =>
+          navigation.navigate('RescheduleAppointment', {
+            appointmentId: e.appointmentId!,
+          })
+      : undefined,
+    // Appointment rows (upcoming, visit or absent) have an options sheet.
+    busy: !!e.attendance && updating === e.attendance.appointmentId,
+    openMenu: e.attendance ? () => setMenuKey(e.key) : undefined,
+    toggleAbsent: e.attendance
+      ? () => toggleAbsent(e.attendance!.appointmentId, !e.attendance!.absent)
+      : undefined,
+  }));
+
+  // The open options sheet: what can be done with that appointment.
+  const menuEvent = events.find(e => e.key === menuKey && e.attendance);
+  const close = () => setMenuKey(undefined);
+  const menu = menuEvent?.attendance && {
+    title: menuEvent.detail ?? menuEvent.title,
+    options: [
+      ...(menuEvent.changeTime
+        ? [
+            {
+              key: 'time',
+              label: a.changeTime,
+              hint: '',
+              danger: false,
+              run: menuEvent.changeTime,
+            },
+          ]
+        : []),
+      menuEvent.attendance.absent
+        ? {
+            key: 'came',
+            label: a.undoAbsent,
+            hint: a.undoAbsentHint,
+            danger: false,
+            run: menuEvent.toggleAbsent!,
+          }
+        : {
+            key: 'absent',
+            label: a.markAbsent,
+            hint: a.markAbsentHint,
+            danger: true,
+            run: menuEvent.toggleAbsent!,
+          },
+    ].map(o => ({
+      ...o,
+      run: () => {
+        close();
+        o.run();
+      },
+    })),
+    close,
+  };
+
   return {
     t,
+    a,
+    menu,
+    editPatient: () => navigation.navigate('EditPatient', {patientId}),
+    bookNext: () => navigation.navigate('BookAppointment', {patientId}),
     initials: initials(patient.name),
     firstName: patient.name.split(' ')[0],
     // The design colours the surname: "Amit [Das]".
@@ -119,22 +208,7 @@ export const usePatientProfileViewModel = () => {
     email: patient.email,
     nextVisit: next ? appointmentDayTime(next) : t.noneBooked,
     addedBanner: added && addedMessage(added, patient.name),
-    events: patientEvents(patient, appointments, entries, now).map(e => ({
-      ...e,
-      when: e.key === freshId ? t.justNow : formatWhen(e.at, now),
-      isNew: e.key === freshId,
-      sms: e.appointmentId
-        ? {
-            status: sms[e.appointmentId] ?? ('idle' as const),
-            send: () => {
-              const a = appointments.find(x => x.id === e.appointmentId);
-              if (a) {
-                confirmSms(a.id, appointmentDayTime(new Date(a.startsAt)));
-              }
-            },
-          }
-        : undefined,
-    })),
+    events,
     open: (file: StoredFile) =>
       openFile(file).catch(e => showError(t.openFileFailed, e)),
     back: navigation.goBack,

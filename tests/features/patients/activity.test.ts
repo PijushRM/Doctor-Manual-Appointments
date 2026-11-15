@@ -36,7 +36,7 @@ describe('patientEvents', () => {
     const events = patientEvents(
       amit,
       [
-        appt('first', iso(10, 11, 30), iso(1)), // the booking that added Amit
+        appt('first', iso(10, 11, 30), iso(1)), // booked when Amit was added
         appt('next', iso(27, 9, 30), iso(24, 9, 15)), // booked this morning, still ahead
       ],
       [],
@@ -45,15 +45,12 @@ describe('patientEvents', () => {
     expect(events.map(e => [e.kind, e.summary, e.detail])).toEqual([
       ['booked', 'Appointment booked · Mon, 27 Oct', 'Mon, 27 Oct · 9:30 AM'],
       ['visit', 'Visit', undefined],
-      [
-        'added',
-        'Added by you · Fri, 10 Oct',
-        'Booked for Fri, 10 Oct · 11:30 AM',
-      ],
+      ['booked', 'Appointment booked · Fri, 10 Oct', 'Fri, 10 Oct · 11:30 AM'],
+      ['added', 'Added by you', undefined],
     ]);
   });
 
-  it('shows one "Added by you" row when the server created patient and booking a moment apart', () => {
+  it('shows "Added by you" and the first booking as separate rows', () => {
     const patient = {...amit, createdAt: '2025-10-20T04:00:00.000Z'};
     const events = patientEvents(
       patient,
@@ -68,8 +65,11 @@ describe('patientEvents', () => {
       [],
       now,
     );
-    expect(events.map(e => e.kind)).toEqual(['added']);
-    expect(events[0].detail).toStartWith('Booked for');
+    // The booking (with its actions) just above "Added by you" (none).
+    expect(events.map(e => [e.kind, e.appointmentId, e.attendance])).toEqual([
+      ['booked', 'a1', {appointmentId: 'a1', absent: false}],
+      ['added', undefined, undefined],
+    ]);
   });
 
   it('offers SMS only on bookings whose visit is still ahead', () => {
@@ -85,6 +85,7 @@ describe('patientEvents', () => {
     expect(events.map(e => [e.kind, e.appointmentId])).toEqual([
       ['booked', 'next'],
       ['visit', undefined],
+      ['booked', undefined],
       ['added', undefined],
     ]);
   });

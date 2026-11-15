@@ -8,9 +8,18 @@
 let session = 0;
 let saves = 0;
 
+// Patients deleted in this session: a refresh that started before the delete
+// still has them, and must not bring them back on screen.
+const deleted = new Set<string>();
+export const isDeleted = (patientId: string) => deleted.has(patientId);
+export const noteDeleted = (patientId: string) => {
+  deleted.add(patientId);
+};
+
 export const currentSession = () => session;
 export const endSession = () => {
   session += 1;
+  deleted.clear();
 };
 
 export const savesSoFar = () => saves;

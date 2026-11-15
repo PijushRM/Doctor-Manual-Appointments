@@ -41,8 +41,14 @@ export const atMinutes = (day: Date, minutes: number) => {
 export const wrap = (value: number, count: number, start: number) =>
   ((((value - start) % count) + count) % count) + start;
 
+// Whether an appointment still takes its slot: not once the patient is
+// marked absent. Every "is this time taken" check goes through this.
+export const holdsSlot = (appointment: Appointment) =>
+  appointment.status !== 'absent';
+
 export const bookedMinutes = (appointments: Appointment[], day: Date) =>
   appointments
+    .filter(holdsSlot)
     .map(a => new Date(a.startsAt))
     .filter(date => isSameDay(date, day))
     .map(minutesOfDay)

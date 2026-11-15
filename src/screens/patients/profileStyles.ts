@@ -93,6 +93,16 @@ export const makeStyles = (theme: Theme) =>
       borderColor: theme.colors.ring,
     },
     smsButtonBusy: {opacity: 0.6},
+    // Full width under the two buttons; outline's flex: 1 must not stretch it.
+    bookNext: {flex: 0, alignSelf: 'stretch'},
+    // Appointment options sheet.
+    menu: {marginTop: 12},
+    menuRow: {
+      paddingVertical: 14,
+      gap: 2,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+    },
     eventTop: {flexDirection: 'row', justifyContent: 'space-between', gap: 8},
     eventTitle: {fontSize: 15},
     eventDetail: {marginTop: 2, fontFamily: FontFamily.medium},

@@ -12,6 +12,8 @@ type MessageInput = {
   doctorName?: string;
   clinicName?: string;
   clinicPhone?: string;
+  // The time was changed: say so ("has been moved to …" / "নতুন সময় …").
+  moved?: boolean;
 };
 
 const WEEKDAYS = [
@@ -57,6 +59,7 @@ const englishMessage = ({
   doctorName,
   clinicName,
   clinicPhone,
+  moved,
 }: MessageInput) => {
   const withWhom = [
     doctorName && `with ${doctorName}`,
@@ -69,9 +72,10 @@ const englishMessage = ({
   const reschedule = clinicPhone
     ? `Reply or call ${clinicPhone} to reschedule.`
     : 'Reply to this message to reschedule.';
+  const what = moved ? 'has been moved to' : 'is on';
   return `Hi ${firstNameOf(
     patientName,
-  )}, your appointment${withWhom} is on ${when}. ${reschedule}`;
+  )}, your appointment${withWhom} ${what} ${when}. ${reschedule}`;
 };
 
 // Names stay as typed; the clinic phone keeps Western digits so the patient's
@@ -87,6 +91,7 @@ const bengaliMessage = ({
   doctorName,
   clinicName,
   clinicPhone,
+  moved,
 }: MessageInput) => {
   const withWhom = [
     clinicName && `${clinicName}-এ`,
@@ -98,11 +103,11 @@ const bengaliMessage = ({
   const reschedule = clinicPhone
     ? `সময় বদলাতে চাইলে ${clinicPhone} নম্বরে ফোন করুন বা এই মেসেজের উত্তর দিন।`
     : 'সময় বদলাতে চাইলে এই মেসেজের উত্তর দিন।';
-  return `প্রিয় ${firstNameOf(
-    patientName,
-  )}, ${withWhom}আপনার অ্যাপয়েন্টমেন্ট ${bengaliDateTime(
-    startsAt,
-  )}-এ নির্ধারিত হয়েছে। ${reschedule}`;
+  const when = bengaliDateTime(startsAt);
+  const what = moved
+    ? `আপনার অ্যাপয়েন্টমেন্টের নতুন সময় ${when}।`
+    : `আপনার অ্যাপয়েন্টমেন্ট ${when}-এ নির্ধারিত হয়েছে।`;
+  return `প্রিয় ${firstNameOf(patientName)}, ${withWhom}${what} ${reschedule}`;
 };
 
 // The appointment text sent to the patient, in the app's language (Settings ›

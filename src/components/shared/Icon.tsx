@@ -58,6 +58,14 @@ const ICONS = {
       <Path d="M12 11v6M12 7.5v.5" />
     </>
   ),
+  // "More options": three dots.
+  more: (
+    <>
+      <Circle cx={5} cy={12} r={1.2} />
+      <Circle cx={12} cy={12} r={1.2} />
+      <Circle cx={19} cy={12} r={1.2} />
+    </>
+  ),
   clock: (
     <>
       <Circle cx={12} cy={12} r={9} />

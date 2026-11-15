@@ -14,7 +14,13 @@ import {phoneDigits} from './patientDraft';
 import {initials} from './patients';
 import {formatSize, uploadTitle} from './recordEntry';
 
-export type ActivityKind = 'added' | 'booked' | 'visit' | 'upload' | 'note';
+export type ActivityKind =
+  | 'added'
+  | 'booked'
+  | 'visit'
+  | 'absent'
+  | 'upload'
+  | 'note';
 export type ActivityEvent = {
   key: string;
   kind: ActivityKind;
@@ -28,6 +34,8 @@ export type ActivityEvent = {
   // A booking whose visit is still ahead: its row offers "Send SMS", in case
   // the patient wasn't told when it was booked.
   appointmentId?: string;
+  // An appointment row that can be marked absent (or, if absent, undone).
+  attendance?: {appointmentId: string; absent: boolean};
 };
 
 const appointmentDay = (date: Date) => formatDate(date, 'EEE, d MMM');
@@ -57,9 +65,6 @@ const entryEvent = (entry: RecordEntry): ActivityEvent => {
 // visits. A booking counts when it was made; the booking that first added the
 // patient reads "Added by you". Once an appointment's time has passed it also
 // counts as a visit.
-// ponytail: no attendance tracking, so a no-show still reads as a visit.
-const ADDED_WITH_BOOKING_MS = 10_000;
-
 export const patientEvents = (
   patient: Patient,
   appointments: Appointment[],
@@ -68,53 +73,57 @@ export const patientEvents = (
 ): ActivityEvent[] => {
   const t = tr(patientsText);
   const events: ActivityEvent[] = entries.map(entryEvent);
-  // The booking that added the patient: the server creates the patient and
-  // then the appointment, a moment apart, so match within a few seconds.
-  const patientAt = new Date(patient.createdAt).getTime();
-  const addingBooking = appointments
-    .filter(
-      a =>
-        Math.abs(new Date(a.createdAt).getTime() - patientAt) <=
-        ADDED_WITH_BOOKING_MS,
-    )
-    .sort(
-      (x, y) =>
-        new Date(x.createdAt).getTime() - new Date(y.createdAt).getTime(),
-    )[0]?.id;
-  let addedWithBooking = false;
+  // Every booking is its own row, including the one made when the patient
+  // was added, so each can be moved, texted or marked absent.
   for (const a of appointments) {
     const startsAt = new Date(a.startsAt);
-    const isFirst = a.id === addingBooking;
-    addedWithBooking ||= isFirst;
-    const title = isFirst ? t.addedByYou : t.appointmentBooked;
+    const absent = a.status === 'absent';
     events.push({
       key: `${a.id}-booked`,
-      kind: isFirst ? 'added' : 'booked',
+      kind: 'booked',
       at: new Date(a.createdAt),
-      title,
-      summary: `${title} · ${appointmentDay(startsAt)}`,
-      detail: `${isFirst ? t.bookedFor : ''}${appointmentDayTime(startsAt)}`,
-      appointmentId: startsAt > now ? a.id : undefined,
+      title: t.appointmentBooked,
+      summary: `${t.appointmentBooked} · ${appointmentDay(startsAt)}`,
+      detail: appointmentDayTime(startsAt),
+      // Still ahead and expected: SMS, change time, or mark absent.
+      appointmentId: startsAt > now && !absent ? a.id : undefined,
+      attendance:
+        startsAt > now && !absent
+          ? {appointmentId: a.id, absent: false}
+          : undefined,
     });
-    if (startsAt <= now) {
+    if (absent) {
+      // Didn't come: shown at the appointment time, can be undone.
+      events.push({
+        key: `${a.id}-absent`,
+        kind: 'absent',
+        at: startsAt,
+        title: t.absent,
+        summary: t.absent,
+        detail: appointmentDayTime(startsAt),
+        attendance: {appointmentId: a.id, absent: true},
+      });
+    } else if (startsAt <= now) {
       events.push({
         key: `${a.id}-visit`,
         kind: 'visit',
         at: startsAt,
         title: t.visit,
         summary: t.visit,
+        // Recorded as a visit until the doctor says the patient didn't come.
+        attendance: {appointmentId: a.id, absent: false},
       });
     }
   }
-  if (!addedWithBooking) {
-    events.push({
-      key: `${patient.id}-added`,
-      kind: 'added',
-      at: new Date(patient.createdAt),
-      title: t.addedByYou,
-      summary: t.addedByYou,
-    });
-  }
+  // When the patient was added: a record only, no actions. With a booking
+  // made at the same moment, that booking sorts just above it.
+  events.push({
+    key: `${patient.id}-added`,
+    kind: 'added',
+    at: new Date(patient.createdAt),
+    title: t.addedByYou,
+    summary: t.addedByYou,
+  });
   return events.sort((x, y) => y.at.getTime() - x.at.getTime());
 };
 
@@ -155,6 +164,7 @@ export type PatientListRow = {
 // The earliest appointment still ahead, if any.
 export const nextVisit = (appointments: Appointment[], now: Date) =>
   appointments
+    .filter(a => a.status !== 'absent')
     .map(a => new Date(a.startsAt))
     .filter(date => date > now)
     .sort((a, b) => a.getTime() - b.getTime())[0];

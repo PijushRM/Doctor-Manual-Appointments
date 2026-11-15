@@ -86,3 +86,17 @@ describe('phone numbers', () => {
     expect(whatsAppNumber('+91 98300 12345')).toBe('919830012345');
   });
 });
+
+describe('appointmentMessage for a changed time', () => {
+  it('says the appointment has moved, in English', () => {
+    expect(appointmentMessage({...full, moved: true}, 'en')).toBe(
+      'Hi Ankita, your appointment with Dr. Subhas Middya at Smile Dental Clinic has been moved to Sat, 25 Oct 2025 at 10:30 AM. Reply or call +91 98765 00000 to reschedule.',
+    );
+  });
+
+  it('gives the new time, in Bengali', () => {
+    expect(appointmentMessage({...full, moved: true}, 'bn')).toBe(
+      'প্রিয় Ankita, Smile Dental Clinic-এ Dr. Subhas Middya-এর কাছে আপনার অ্যাপয়েন্টমেন্টের নতুন সময় শনিবার, ২৫ অক্টোবর ২০২৫, সকাল ১০:৩০। সময় বদলাতে চাইলে +91 98765 00000 নম্বরে ফোন করুন বা এই মেসেজের উত্তর দিন।',
+    );
+  });
+});

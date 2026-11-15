@@ -11,6 +11,7 @@ import {NewAppointmentDetailsScreen} from 'src/screens/appointments/NewAppointme
 import {MyPatientsScreen} from 'src/screens/home/MyPatientsScreen';
 import {PatientListScreen} from 'src/screens/patients/PatientListScreen';
 import {PatientProfileScreen} from 'src/screens/patients/PatientProfileScreen';
+import {EditPatientScreen} from 'src/screens/patients/EditPatientScreen';
 import {UploadNoteScreen} from 'src/screens/patients/UploadNoteScreen';
 import {AboutScreen} from 'src/screens/profile/AboutScreen';
 import {ChangePasswordScreen} from 'src/screens/profile/ChangePasswordScreen';
@@ -63,6 +64,15 @@ const PatientsTab = () => (
       component={PatientProfileScreen}
     />
     <PatientsStack.Screen name="UploadNote" component={UploadNoteScreen} />
+    <PatientsStack.Screen
+      name="RescheduleAppointment"
+      component={NewAppointmentDateTimeScreen}
+    />
+    <PatientsStack.Screen
+      name="BookAppointment"
+      component={NewAppointmentDateTimeScreen}
+    />
+    <PatientsStack.Screen name="EditPatient" component={EditPatientScreen} />
   </PatientsStack.Navigator>
 );
 

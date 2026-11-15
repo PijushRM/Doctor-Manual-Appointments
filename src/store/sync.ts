@@ -12,7 +12,7 @@ import {
 } from 'src/store/useDoctorStore';
 import {useClinicStore} from 'src/store/useClinicStore';
 import {errorMessage} from 'src/utils/errors';
-import {currentSession, endSession, savesSoFar} from './session';
+import {currentSession, endSession, isDeleted, savesSoFar} from './session';
 import {logger} from 'src/utils/logger';
 
 // Nothing is saved on the phone: every screen shows what the server last sent,
@@ -45,6 +45,15 @@ export const applySync = (payload: SyncPayload, keepNewer = false) => {
     applyDoctor(payload.doctor);
   }
   useClinicStore.setState(s => {
+    // Deleted here while this copy was on its way: keep them gone.
+    const kept = <T extends {patientId: string}>(list: T[]) =>
+      list.filter(x => !isDeleted(x.patientId));
+    payload = {
+      ...payload,
+      patients: payload.patients.filter(p => !isDeleted(p.id)),
+      appointments: kept(payload.appointments),
+      entries: kept(payload.entries),
+    };
     const entries = payload.entries.map(e => toEntry(e));
     return keepNewer
       ? {

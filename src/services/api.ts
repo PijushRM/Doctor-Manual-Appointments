@@ -288,6 +288,35 @@ export const api = {
       json: {startsAt: startsAt.toISOString(), ...who},
     }),
 
+  // Changes an appointment: a new time, and/or whether the patient came
+  // (absent frees the slot). Its patient never changes.
+  updateAppointment: (
+    appointmentId: string,
+    changes: {startsAt?: Date; status?: 'booked' | 'absent'},
+  ) =>
+    request<{
+      data: {appointment: Appointment; patient: Patient};
+      warnings: {overlaps: string[]; inPast: boolean};
+    }>(`/api/appointments/${encodeURIComponent(appointmentId)}`, {
+      method: 'PATCH',
+      json: {
+        ...(changes.startsAt && {startsAt: changes.startsAt.toISOString()}),
+        ...(changes.status && {status: changes.status}),
+      },
+    }),
+
+  updatePatient: (patientId: string, changes: Partial<NewPatient>) =>
+    request<{data: Patient}>(`/api/patients/${encodeURIComponent(patientId)}`, {
+      method: 'PATCH',
+      json: changes,
+    }),
+
+  // Soft delete on the server: hidden from the app, history kept.
+  deletePatient: (patientId: string) =>
+    request<{ok: true}>(`/api/patients/${encodeURIComponent(patientId)}`, {
+      method: 'DELETE',
+    }),
+
   addRecord: (
     patientId: string,
     entry: {docType: DocType | null; file: StoredFile | null; note: string},

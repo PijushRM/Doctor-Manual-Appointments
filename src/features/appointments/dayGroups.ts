@@ -4,6 +4,7 @@ import {tr} from 'src/i18n';
 import {clockTime, formatDate} from 'src/i18n/format';
 import {appointmentsText} from 'src/i18n/strings/appointments';
 import type {Appointment, Patient} from 'src/types/clinic';
+import {holdsSlot} from './schedule';
 
 export type HomeTab = 'today' | 'upcoming' | 'all';
 type When = 'today' | 'upcoming' | 'past';
@@ -31,8 +32,9 @@ export const countByTab = (
   appointments: Appointment[],
   now: Date,
 ): Record<HomeTab, number> => {
-  const counts = {today: 0, upcoming: 0, all: appointments.length};
-  for (const appointment of appointments) {
+  const booked = appointments.filter(holdsSlot);
+  const counts = {today: 0, upcoming: 0, all: booked.length};
+  for (const appointment of booked) {
     const when = whenOf(new Date(appointment.startsAt), now);
     if (when !== 'past') {
       counts[when]++;
@@ -43,8 +45,9 @@ export const countByTab = (
 
 // Appointments in the current Monday–Sunday week (Profile's "This week").
 export const countThisWeek = (appointments: Appointment[], now: Date) =>
-  appointments.filter(a =>
-    isSameWeek(new Date(a.startsAt), now, {weekStartsOn: 1}),
+  appointments.filter(
+    a =>
+      holdsSlot(a) && isSameWeek(new Date(a.startsAt), now, {weekStartsOn: 1}),
   ).length;
 
 export const patientCountLabel = (count: number) =>
@@ -75,7 +78,9 @@ export const groupByDay = (
     {date: Date; when: When; rows: AppointmentRow[]}
   >();
 
+  // Absent patients drop off the day lists (their slot is free again).
   const sorted = appointments
+    .filter(holdsSlot)
     .map(appointment => ({appointment, date: new Date(appointment.startsAt)}))
     .sort((a, b) => a.date.getTime() - b.date.getTime());
 

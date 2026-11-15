@@ -162,3 +162,133 @@ describe('addEntry', () => {
     });
   });
 });
+
+describe('rescheduleAppointment', () => {
+  const later = new Date(2025, 9, 26, 16, 0);
+  const existing = {
+    id: oid(101),
+    patientId: oid(1),
+    startsAt: startsAt.toISOString(),
+    createdAt: '2025-10-24T03:30:00.000Z',
+  };
+
+  it('moves the appointment on the server and shows the new time', async () => {
+    useClinicStore.setState({
+      patients: [serverPatient],
+      appointments: [existing],
+    });
+    const calls = fakeServer(() => ({
+      json: {
+        data: {
+          appointment: {...existing, startsAt: later.toISOString()},
+          patient: serverPatient,
+        },
+        warnings: {overlaps: [], inPast: false},
+      },
+    }));
+    const {warnings} = await useClinicStore
+      .getState()
+      .rescheduleAppointment(oid(101), later);
+    expect(calls.map(c => [c.method, c.path])).toEqual([
+      ['PATCH', `/api/appointments/${oid(101)}`],
+    ]);
+    expect(calls[0].json).toEqual({startsAt: later.toISOString()});
+    expect(useClinicStore.getState().appointments).toEqual([
+      {...existing, startsAt: later.toISOString()},
+    ]);
+    expect(warnings).toEqual({overlaps: [], inPast: false});
+  });
+
+  it('leaves the time alone when the server can’t be reached', async () => {
+    useClinicStore.setState({appointments: [existing]});
+    fakeServer(() => 'offline');
+    await expect(
+      useClinicStore.getState().rescheduleAppointment(oid(101), later),
+    ).rejects.toMatchObject({status: 0});
+    expect(useClinicStore.getState().appointments).toEqual([existing]);
+  });
+});
+
+describe('patient actions', () => {
+  const appointment = {
+    id: oid(101),
+    patientId: oid(1),
+    startsAt: startsAt.toISOString(),
+    createdAt: '2025-10-24T03:30:00.000Z',
+  };
+
+  it('marks an appointment absent, and back', async () => {
+    useClinicStore.setState({appointments: [appointment]});
+    const calls = fakeServer(({json}) => ({
+      json: {
+        data: {
+          appointment: {...appointment, ...(json as object)},
+          patient: serverPatient,
+        },
+        warnings: {overlaps: [], inPast: false},
+      },
+    }));
+    await useClinicStore.getState().setAbsent(oid(101), true);
+    expect(calls[0]).toMatchObject({
+      method: 'PATCH',
+      path: `/api/appointments/${oid(101)}`,
+      json: {status: 'absent'},
+    });
+    expect(useClinicStore.getState().appointments[0].status).toBe('absent');
+    await useClinicStore.getState().setAbsent(oid(101), false);
+    expect(calls[1].json).toEqual({status: 'booked'});
+    expect(useClinicStore.getState().appointments[0].status).toBe('booked');
+  });
+
+  it('edits a patient’s details', async () => {
+    useClinicStore.setState({patients: [serverPatient]});
+    const calls = fakeServer(() => ({
+      json: {data: {...serverPatient, age: 30}},
+    }));
+    await useClinicStore.getState().updatePatient(oid(1), {age: 30});
+    expect(calls[0]).toMatchObject({
+      method: 'PATCH',
+      path: `/api/patients/${oid(1)}`,
+      json: {age: 30},
+    });
+    expect(useClinicStore.getState().patients[0].age).toBe(30);
+  });
+
+  it('deletes a patient with their appointments and records', async () => {
+    useClinicStore.setState({
+      patients: [serverPatient],
+      appointments: [appointment],
+      entries: [
+        {
+          id: oid(7),
+          patientId: oid(1),
+          at: '',
+          docType: null,
+          file: null,
+          note: 'x',
+        },
+      ],
+    });
+    const calls = fakeServer(() => ({json: {ok: true}}));
+    await useClinicStore.getState().deletePatient(oid(1));
+    expect(calls[0]).toMatchObject({
+      method: 'DELETE',
+      path: `/api/patients/${oid(1)}`,
+    });
+    const s = useClinicStore.getState();
+    expect([s.patients, s.appointments, s.entries]).toEqual([[], [], []]);
+  });
+
+  it('books the next appointment for a patient on the list', async () => {
+    useClinicStore.setState({patients: [serverPatient]});
+    const calls = fakeServer(() => booking(2));
+    const {id} = await useClinicStore
+      .getState()
+      .bookForPatient(oid(1), startsAt);
+    expect(calls[0].json).toEqual({
+      startsAt: startsAt.toISOString(),
+      patientId: oid(1),
+    });
+    expect(useClinicStore.getState().appointments.map(a => a.id)).toEqual([id]);
+  });
+});

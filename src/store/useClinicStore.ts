@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import {api, toEntry} from 'src/services/api';
-import {currentSession, noteSave} from './session';
+import {currentSession, noteDeleted, noteSave} from './session';
 import type {
   Appointment,
   NewPatient,
@@ -23,6 +23,24 @@ type ClinicState = {
     patient: NewPatient,
     startsAt: Date,
   ) => Promise<{id: string; warnings: BookingWarnings}>;
+  // Books another appointment for a patient already on the list.
+  bookForPatient: (
+    patientId: string,
+    startsAt: Date,
+  ) => Promise<{id: string; warnings: BookingWarnings}>;
+  // Moves an appointment to a new time. Throws ApiError like addAppointment.
+  rescheduleAppointment: (
+    appointmentId: string,
+    startsAt: Date,
+  ) => Promise<{warnings: BookingWarnings}>;
+  // The patient didn't come (frees the slot), or undo that.
+  setAbsent: (appointmentId: string, absent: boolean) => Promise<void>;
+  updatePatient: (
+    patientId: string,
+    changes: Partial<NewPatient>,
+  ) => Promise<void>;
+  // Soft delete: gone from the app (and their upcoming appointments).
+  deletePatient: (patientId: string) => Promise<void>;
   // Uploads and notes ("Add to record"). Returns the new entry's id.
   addEntry: (entry: Omit<RecordEntry, 'id' | 'at'>) => Promise<string>;
 };
@@ -54,6 +72,75 @@ export const useClinicStore = create<ClinicState>()(
         });
       }
       return {id: data.appointment.id, warnings};
+    },
+    bookForPatient: async (patientId, startsAt) => {
+      const session = currentSession();
+      const {data, warnings} = await api.bookAppointment(startsAt, {patientId});
+      if (session === currentSession()) {
+        set(s => ({appointments: upsert(s.appointments, data.appointment)}));
+        noteSave();
+        logger.info('save', `Appointment booked ${data.appointment.id}`, {
+          patient: patientId,
+          overlaps: warnings.overlaps.length,
+        });
+      }
+      return {id: data.appointment.id, warnings};
+    },
+    setAbsent: async (appointmentId, absent) => {
+      const session = currentSession();
+      const {data} = await api.updateAppointment(appointmentId, {
+        status: absent ? 'absent' : 'booked',
+      });
+      if (session === currentSession()) {
+        set(s => ({appointments: upsert(s.appointments, data.appointment)}));
+        noteSave();
+        logger.info(
+          'save',
+          `Appointment ${
+            absent ? 'marked absent' : 'marked as came'
+          } ${appointmentId}`,
+        );
+      }
+    },
+    updatePatient: async (patientId, changes) => {
+      const session = currentSession();
+      const {data} = await api.updatePatient(patientId, changes);
+      if (session === currentSession()) {
+        set(s => ({patients: upsert(s.patients, data)}));
+        noteSave();
+        logger.info('save', `Patient updated ${patientId}`, {
+          fields: Object.keys(changes),
+        });
+      }
+    },
+    deletePatient: async patientId => {
+      const session = currentSession();
+      await api.deletePatient(patientId);
+      if (session === currentSession()) {
+        noteDeleted(patientId);
+        set(s => ({
+          patients: s.patients.filter(p => p.id !== patientId),
+          appointments: s.appointments.filter(a => a.patientId !== patientId),
+          entries: s.entries.filter(e => e.patientId !== patientId),
+        }));
+        noteSave();
+        logger.info('save', `Patient deleted ${patientId}`);
+      }
+    },
+    rescheduleAppointment: async (appointmentId, startsAt) => {
+      const session = currentSession();
+      const {data, warnings} = await api.updateAppointment(appointmentId, {
+        startsAt,
+      });
+      if (session === currentSession()) {
+        set(s => ({appointments: upsert(s.appointments, data.appointment)}));
+        noteSave();
+        logger.info('save', `Appointment moved ${appointmentId}`, {
+          overlaps: warnings.overlaps.length,
+          inPast: warnings.inPast,
+        });
+      }
+      return {warnings};
     },
     addEntry: async entry => {
       const session = currentSession();

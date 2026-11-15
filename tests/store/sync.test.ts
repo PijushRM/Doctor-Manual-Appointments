@@ -171,3 +171,25 @@ describe('late answers', () => {
     expect(useClinicStore.getState().appointments).toEqual([]);
   });
 });
+
+describe('deleted while a refresh was on its way', () => {
+  it('does not bring the deleted patient back', async () => {
+    useSyncStore.setState({status: 'ready'});
+    useClinicStore.setState({patients: [patient(oid(1))]});
+    let release!: () => void;
+    const gate = new Promise<void>(r => (release = r));
+    globalThis.fetch = (async (url: string, init: RequestInit = {}) => {
+      if (url.endsWith('/api/sync')) {
+        await gate;
+        return Response.json({...emptySync(), patients: [patient(oid(1))]});
+      }
+      expect(init.method).toBe('DELETE');
+      return Response.json({ok: true});
+    }) as unknown as typeof fetch;
+    const sync = syncAll();
+    await useClinicStore.getState().deletePatient(oid(1));
+    release();
+    await sync;
+    expect(useClinicStore.getState().patients).toEqual([]);
+  });
+});

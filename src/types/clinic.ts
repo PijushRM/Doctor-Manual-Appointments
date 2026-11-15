@@ -13,6 +13,8 @@ export type Appointment = {
   patientId: string;
   startsAt: string;
   createdAt: string; // when it was booked (an activity on the Patients list)
+  // absent: the patient didn't come; the slot is free again. Missing = booked.
+  status?: 'booked' | 'absent';
 };
 
 // A patient as entered on New Appointment, before it is saved.

@@ -4,15 +4,20 @@ import {AppText} from 'src/components/shared/AppText';
 import {BackHeader} from 'src/components/shared/BackHeader';
 import {Icon, type IconName} from 'src/components/shared/Icon';
 import {Screen} from 'src/components/shared/Screen';
+import {Sheet} from 'src/components/shared/Sheet';
 import type {ActivityEvent} from 'src/features/patients/activity';
 import {usePatientProfileViewModel} from 'src/hooks/usePatientProfileViewModel';
 import {useStyles, useTheme} from 'src/hooks/useTheme';
+import {tr} from 'src/i18n';
+import {rescheduleText} from 'src/i18n/strings/reschedule';
 import {makeStyles} from './profileStyles';
 
 const eventIcon = (event: ActivityEvent): IconName => {
   switch (event.kind) {
     case 'visit':
       return 'check';
+    case 'absent':
+      return 'close';
     case 'note':
       return 'pencil';
     case 'upload':
@@ -31,6 +36,7 @@ export const PatientProfileScreen = () => {
     return null;
   }
   const {t} = vm;
+  const r = tr(rescheduleText);
 
   const info: {icon: IconName; text: React.ReactNode}[] = [
     {icon: 'phone', text: vm.phone},
@@ -51,7 +57,19 @@ export const PatientProfileScreen = () => {
       <BackHeader
         onBack={vm.back}
         backLabel={t.backToPatients}
-        right={<AppText variant="caption">{t.profileTag}</AppText>}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={vm.a.editPatient}
+            onPress={vm.editPatient}
+            hitSlop={8}
+            style={({pressed}) => [
+              styles.smsButton,
+              pressed && styles.eventPressed,
+            ]}>
+            <Icon name="pencil" size={18} color={colors.textLink} />
+          </Pressable>
+        }
       />
 
       <View style={styles.body}>
@@ -124,6 +142,20 @@ export const PatientProfileScreen = () => {
             </AppText>
           </Pressable>
         </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={vm.bookNext}
+          style={({pressed}) => [
+            styles.action,
+            styles.outline,
+            styles.bookNext,
+            pressed && styles.pressed,
+          ]}>
+          <Icon name="calendar" size={18} color={colors.textBrand} />
+          <AppText variant="button" color="textBrand" style={styles.actionText}>
+            {vm.a.bookNext}
+          </AppText>
+        </Pressable>
 
         {vm.addedBanner && (
           <View style={styles.banner} accessibilityRole="alert">
@@ -159,13 +191,30 @@ export const PatientProfileScreen = () => {
                 // Screen readers treat the row as one item, so its SMS
                 // button is offered as an action on the row.
                 accessibilityActions={
-                  event.sms && event.sms.status !== 'sending'
-                    ? [{name: 'sendSms', label: t.sendSmsAction}]
+                  event.openMenu
+                    ? [
+                        ...(event.sms && event.sms.status !== 'sending'
+                          ? [{name: 'sendSms', label: t.sendSmsAction}]
+                          : []),
+                        ...(event.changeTime
+                          ? [{name: 'changeTime', label: r.changeTime}]
+                          : []),
+                        {
+                          name: 'attendance',
+                          label: event.attendance?.absent
+                            ? vm.a.undoAbsent
+                            : vm.a.markAbsent,
+                        },
+                      ]
                     : undefined
                 }
                 onAccessibilityAction={e => {
                   if (e.nativeEvent.actionName === 'sendSms') {
                     event.sms?.send();
+                  } else if (e.nativeEvent.actionName === 'changeTime') {
+                    event.changeTime?.();
+                  } else if (e.nativeEvent.actionName === 'attendance') {
+                    event.toggleAbsent?.();
                   }
                 }}
                 accessibilityLabel={[
@@ -230,6 +279,24 @@ export const PatientProfileScreen = () => {
                     </View>
                   )}
                 </View>
+                {event.openMenu &&
+                  (event.busy ? (
+                    <View style={styles.smsButton}>
+                      <ActivityIndicator size="small" color={colors.textLink} />
+                    </View>
+                  ) : (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={vm.a.moreFor(event.detail ?? '')}
+                      onPress={event.openMenu}
+                      hitSlop={6}
+                      style={({pressed}) => [
+                        styles.smsButton,
+                        pressed && styles.eventPressed,
+                      ]}>
+                      <Icon name="more" size={18} color={colors.textLink} />
+                    </Pressable>
+                  ))}
                 {event.sms && (
                   <Pressable
                     accessibilityRole="button"
@@ -265,6 +332,45 @@ export const PatientProfileScreen = () => {
           })}
         </ScrollView>
       </View>
+
+      {vm.menu && (
+        <Sheet label={vm.menu.title} onClose={vm.menu.close}>
+          <AppText variant="heading" accessibilityRole="header">
+            {vm.menu.title}
+          </AppText>
+          <View style={styles.menu}>
+            {vm.menu.options.map(o => (
+              <Pressable
+                key={o.key}
+                accessibilityRole="button"
+                accessibilityHint={o.hint || undefined}
+                onPress={o.run}
+                style={({pressed}) => [
+                  styles.menuRow,
+                  pressed && styles.eventPressed,
+                ]}>
+                <AppText
+                  variant="bodyStrong"
+                  color={o.danger ? 'textDanger' : 'textBase'}>
+                  {o.label}
+                </AppText>
+                {!!o.hint && <AppText variant="caption">{o.hint}</AppText>}
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              onPress={vm.menu.close}
+              style={({pressed}) => [
+                styles.menuRow,
+                pressed && styles.eventPressed,
+              ]}>
+              <AppText variant="bodyStrong" color="textSubtle">
+                {vm.a.cancel}
+              </AppText>
+            </Pressable>
+          </View>
+        </Sheet>
+      )}
     </Screen>
   );
 };
